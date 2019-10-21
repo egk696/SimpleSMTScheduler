@@ -1,0 +1,6 @@
+Period (us),Deadline (us),Execution (us),Name,Fixed Start (us)
+20000      ,20000        ,2304          ,ACT ,None
+5000       ,5000         ,200           ,RCV ,None
+10000      ,10000        ,138           ,SND ,None
+100000     ,100000       ,4             ,MON ,None
+5000       ,5000         ,375           ,SYN ,0
