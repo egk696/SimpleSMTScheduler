@@ -1,14 +1,11 @@
-# Author: Eleftherios Kyriakakis
+# Author: Eleftherios Kyriakakis (egk696@hotmail.com)
 
-import sys
 import csv
-import itertools
-import matplotlib.pyplot as plt
-import numpy as np
-from time import *
-from z3 import *
 from math import *
-from datetime import date
+from time import *
+
+import matplotlib.pyplot as plt
+from z3 import *
 
 MY_DPI = 300
 SEC_TO_MS = 1000
