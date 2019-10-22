@@ -1,5 +1,5 @@
 # SimpleSMTScheduler
-A simple SMT-based monotonic rate scheduler for real-time tasks
+A simple SMT-based schedule generator for scheduling rate monotonic real-time tasks
 
 # Usage
 The application can run in two modes, either interactive or via command-line. 
