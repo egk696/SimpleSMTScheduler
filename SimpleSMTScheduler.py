@@ -9,7 +9,7 @@ from time import *
 import matplotlib.pyplot as plt
 from z3 import *
 
-MY_DPI = 300
+MY_DPI = 480
 SEC_TO_MS = 1000
 US_TO_MS = 0.001
 SYS_CLK = 0.0125
@@ -127,15 +127,12 @@ def plot_schedule(task_set, hyper_period, periods):
     axis.set_ylabel('Tasks')
 
     # axis.set_xticks(range(0, periods*Sum([t.getStartPIT()+t.execution for t in taskSet]), 5000))
-    axis.set_xticks(range(0, hyper_period * periods, int(hyper_period * periods / 20)))
+    axis.set_xticks(range(0, hyper_period * periods, int(hyper_period * periods / 10)))
 
     # Setting ticks on y-axis
     axis.set_yticks(range(5, len(task_set) * 10 + 5, 10))
     # Labelling tickes of y-axis
     axis.set_yticklabels([t.name for t in task_set])
-
-    # # Setting graph attribute
-    # axis.grid(True, 'both', 'both')
 
     # Show the major grid lines with dark grey lines
     plt.grid(b=True, which='major', color='#666666', linestyle='-')
@@ -147,8 +144,6 @@ def plot_schedule(task_set, hyper_period, periods):
     # Color map
     cmap = plt.cm.get_cmap('jet', len(task_set))
 
-    # for period in range(0, periods * hyperPeriod, hyperPeriod):
-
     for i in range(len(task_set)):
         # Constructing task execution
         taskExecutionBars = []
@@ -157,6 +152,9 @@ def plot_schedule(task_set, hyper_period, periods):
         # Declaring a bar in schedule
         axis.broken_barh(taskExecutionBars, (i * 10, 10), label=task_set[i].name, linewidth=0.3, edgecolors='black',
                          facecolors=cmap(i))
+
+    # Rotate labels to fit nicely
+    fig.autofmt_xdate()
 
     return plt
 
