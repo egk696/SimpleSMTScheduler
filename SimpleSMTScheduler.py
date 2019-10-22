@@ -1,6 +1,8 @@
-# Author: Eleftherios Kyriakakis (egk696@hotmail.com)
+#!/usr/bin/python
 
 import csv
+# Author: Eleftherios Kyriakakis (egk696@hotmail.com)
+import getopt
 from math import *
 from time import *
 
@@ -16,8 +18,11 @@ LISTEN_WIN = 500
 
 taskSet = []
 tasksFileName = ""
-show = True
+scheduleFileName = ""
+schedulePlotPeriods = 1
+plot = True
 verbose = True
+interactive = False
 
 
 class Task:
@@ -46,26 +51,26 @@ class Task:
         return self.pit
 
 
-def findLCM(numbers):
+def find_lcm(numbers):
     lcm = numbers[0]
     for ii in numbers[1:]:
         lcm = int(lcm * ii / gcd(lcm, ii))
     return lcm
 
 
-def genSchedule(taskSet):
+def gen_schedule(task_set):
     # Find the hyper period
-    hyperperiod = findLCM([o.period for o in taskSet])
-    print("\nSchedule hyper period = %s" % hyperperiod)
+    hyper_period = find_lcm([o.period for o in task_set])
+    print("\nSchedule hyper period = %s" % hyper_period)
     # Define constraints
     s = Solver()
     # Define a set keep the constraints
     # Search for distinct values
-    s.add(Distinct([t.start_pit for t in taskSet]))
+    s.add(Distinct([t.start_pit for t in task_set]))
     # The sum of durations should not exceed the hyper period
-    s.add(Sum([t.start_pit + t.execution for t in taskSet]) <= hyperperiod)
+    s.add(Sum([t.start_pit + t.execution for t in task_set]) <= hyper_period)
     # Search for task specific
-    for task in taskSet:
+    for task in task_set:
         # Each task should finish within the deadline
         s.add(task.start_pit + task.execution < task.deadline)
         # If a task has a user fixed start PIT define it
@@ -74,11 +79,11 @@ def genSchedule(taskSet):
         else:
             s.add(task.start_pit >= 0)
         # Constraints against the other tasks
-        others = [o for o in taskSet if o != task]
-        for jj in range(floor(hyperperiod / task.period)):
+        others = [o for o in task_set if o != task]
+        for jj in range(floor(hyper_period / task.period)):
             for ot in others:
                 # The start PIT should not fall within the execution of another task
-                for kk in range(floor(hyperperiod / task.period)):
+                for kk in range(floor(hyper_period / task.period)):
                     s.add(Or(jj * task.period + task.start_pit + task.execution < kk * ot.period + ot.start_pit,
                              jj * task.period + task.start_pit > kk * ot.period + ot.start_pit + ot.execution))
 
@@ -95,39 +100,39 @@ def genSchedule(taskSet):
         print("\nCould not be solved")
 
     if verbose:
-        # print("\nAsserted constraints...")
-        # for c in s.assertions():
-        #     print(c)
-        # print("\nZ3 statistics...")
-        # for k, v in s.statistics():
-        #     print("%s : %s" % (k, v))
+        print("\nAsserted constraints...")
+        for c in s.assertions():
+            print(c)
+        print("\nZ3 statistics...")
+        for k, v in s.statistics():
+            print("%s : %s" % (k, v))
 
         print("\nSolver completed in %s ms" % (elapsed_time * SEC_TO_MS))
 
-    return m, hyperperiod
+    return m, hyper_period
 
 
-def drawSchedule(taskSet, hyperPeriod, periods):
+def plot_schedule(task_set, hyper_period, periods):
     # Declaring a figure "gnt"
     fig, axis = plt.subplots()
 
     # Setting Y-axis limits
-    axis.set_ylim(0, len(taskSet) * 10)
+    axis.set_ylim(0, len(task_set) * 10)
 
     # Setting X-axis limits
-    axis.set_xlim(0, periods * Sum([t.getStartPIT() + t.execution for t in taskSet]))
+    axis.set_xlim(0, periods * Sum([t.getStartPIT() + t.execution for t in task_set]))
     # axis.set_xlim(0, hyperPeriod * periods)
     # Setting labels for x-axis and y-axis
     axis.set_xlabel('Schedule Timeline (μs)')
     axis.set_ylabel('Tasks')
 
     # axis.set_xticks(range(0, periods*Sum([t.getStartPIT()+t.execution for t in taskSet]), 5000))
-    axis.set_xticks(range(0, hyperPeriod * periods, int(hyperPeriod * periods / 20)))
+    axis.set_xticks(range(0, hyper_period * periods, int(hyper_period * periods / 20)))
 
     # Setting ticks on y-axis
-    axis.set_yticks(range(5, len(taskSet) * 10 + 5, 10))
+    axis.set_yticks(range(5, len(task_set) * 10 + 5, 10))
     # Labelling tickes of y-axis
-    axis.set_yticklabels([t.name for t in taskSet])
+    axis.set_yticklabels([t.name for t in task_set])
 
     # # Setting graph attribute
     # axis.grid(True, 'both', 'both')
@@ -140,17 +145,17 @@ def drawSchedule(taskSet, hyperPeriod, periods):
     plt.grid(b=True, which='minor', color='#999999', linestyle='-', alpha=0.2)
 
     # Color map
-    cmap = plt.cm.get_cmap('jet', len(taskSet))
+    cmap = plt.cm.get_cmap('jet', len(task_set))
 
     # for period in range(0, periods * hyperPeriod, hyperPeriod):
 
-    for i in range(len(taskSet)):
+    for i in range(len(task_set)):
         # Constructing task execution
         taskExecutionBars = []
-        for jj in range(floor(hyperperiod * periods / taskSet[i].period)):
-            taskExecutionBars.append((jj * taskSet[i].period + taskSet[i].getStartPIT(), taskSet[i].execution))
+        for jj in range(floor(hyper_period * periods / task_set[i].period)):
+            taskExecutionBars.append((jj * task_set[i].period + task_set[i].getStartPIT(), task_set[i].execution))
         # Declaring a bar in schedule
-        axis.broken_barh(taskExecutionBars, (i * 10, 10), label=taskSet[i].name, linewidth=0.3, edgecolors='black',
+        axis.broken_barh(taskExecutionBars, (i * 10, 10), label=task_set[i].name, linewidth=0.3, edgecolors='black',
                          facecolors=cmap(i))
 
     return plt
@@ -159,7 +164,40 @@ def drawSchedule(taskSet, hyperPeriod, periods):
 if __name__ == "__main__":
     print("\nWelcome to this simple SMT scheduler (SSMTS)...")
 
-    if tasksFileName is None or tasksFileName == "":
+    if len(sys.argv) > 1:
+        try:
+            opts, args = getopt.getopt(sys.argv[1:], "hi:o:n:pv",
+                                       ["help", "itasks=", "osched=", "nperiods=", "plot", "verbose"])
+        except getopt.GetoptError:
+            print('test.py -i <inputtasks> -o <outputschedule> -n <plotperiods> -p -v')
+            sys.exit(2)
+        plot = False
+        verbose = False
+        schedulePlotPeriods = 1
+        for opt, arg in opts:
+            if opt in ("-h", "--help"):
+                print('test.py -i <inputtasks> -o <outputschedule> -n <plotperiods> -p -v')
+                print("-h\t--help")
+                print("-i\t--itasks")
+                print("-o\t--osched")
+                print("-n\t--nperiods")
+                print("-p\t--plot")
+                print("-v\t--verbose")
+                sys.exit()
+            elif opt in ("-i", "--itasks"):
+                tasksFileName = arg
+            elif opt in ("-o", "--osched"):
+                scheduleFileName = arg
+            elif opt in ("-n", "--nperiods"):
+                schedulePlotPeriods = int(arg)
+            elif opt in ("-p", "--plot"):
+                plot = True
+            elif opt in ("-v", "--verbose"):
+                verbose = True
+    else:
+        interactive = True
+
+    if interactive:
         tasksFileName = input("\nEnter the csv file for the tasks to be scheduled: ")
 
     with open(tasksFileName, 'r') as f:
@@ -194,7 +232,7 @@ if __name__ == "__main__":
     if [t for t in taskSet if t.execution > t.period or t.execution > t.deadline]:
         sys.exit("\nTask set is not valid.\nExecution times violate period and deadline constraints")
     else:
-        schedule, hyperperiod = genSchedule(taskSet)
+        schedule, hyperPeriod = gen_schedule(taskSet)
 
         if schedule is not None:
             for i in range(len(taskSet)):
@@ -202,9 +240,12 @@ if __name__ == "__main__":
 
             taskSet.sort(key=lambda x: x.getStartPIT())
 
-            schedPlot = drawSchedule(taskSet, hyperperiod, 1)
+            schedulePlot = plot_schedule(taskSet, hyperPeriod, schedulePlotPeriods)
 
-            schedPlot.show()
+            if interactive:
+                schedulePlot.show()
+            elif plot:
+                schedulePlot.savefig(scheduleFileName, dpi=MY_DPI)
 
             sys.exit()
         else:
