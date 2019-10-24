@@ -209,6 +209,8 @@ if __name__ == "__main__":
     if interactive:
         tasksFileName = input("\nEnter the csv file for the tasks to be scheduled: ")
         schedulePlotPeriods = int(input("\nEnter the number of hyper periods to be plotted: "))
+        verbose = input("\nEnable statistics (Yes/No)? ") == "Yes"
+        print("\n")
 
     with open(tasksFileName, 'r') as f:
         reader = csv.reader(f)
