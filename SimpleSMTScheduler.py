@@ -59,12 +59,16 @@ def find_lcm(numbers):
 
 
 def gen_schedule(task_set):
+    # Test utilization
+    utilization = sum(t.execution / t.period for t in taskSet)
+    print("\nUtilization = %s" % utilization)
+    if utilization > len(taskSet) * (2 ** (1 / len(taskSet)) - 1):
+        print("\nSufficient schedulability test failed")
     # Find the hyper period
     hyper_period = find_lcm([o.period for o in task_set])
     print("\nSchedule hyper period = %s" % hyper_period)
     # Define constraints
     s = Solver()
-    # Define a set keep the constraints
     # Search for distinct values
     s.add(Distinct([t.start_pit for t in task_set]))
     # The sum of durations should not exceed the hyper period
@@ -144,11 +148,18 @@ def plot_schedule(task_set, hyper_period, periods):
     # Color map
     cmap = plt.cm.get_cmap('jet', len(task_set))
 
+    print("\nSchedule printout for %s periods" % periods)
+
     for i in range(len(task_set)):
+        print(taskSet[i].name, end='')
+        print("[", end='')
         # Constructing task execution
         taskExecutionBars = []
         for jj in range(floor(hyper_period * periods / task_set[i].period)):
             taskExecutionBars.append((jj * task_set[i].period + task_set[i].getStartPIT(), task_set[i].execution))
+            print(jj * taskSet[i].period + taskSet[i].getStartPIT(), end='')
+            print(",", end='')
+        print("]\n")
         # Declaring a bar in schedule
         axis.broken_barh(taskExecutionBars, (i * 10, 10), label=task_set[i].name, linewidth=0.3, edgecolors='black',
                          facecolors=cmap(i))
@@ -197,6 +208,7 @@ if __name__ == "__main__":
 
     if interactive:
         tasksFileName = input("\nEnter the csv file for the tasks to be scheduled: ")
+        schedulePlotPeriods = int(input("\nEnter the number of hyper periods to be plotted: "))
 
     with open(tasksFileName, 'r') as f:
         reader = csv.reader(f)
@@ -231,7 +243,6 @@ if __name__ == "__main__":
         sys.exit("\nTask set is not valid.\nExecution times violate period and deadline constraints")
     else:
         schedule, hyperPeriod = gen_schedule(taskSet)
-
         if schedule is not None:
             for i in range(len(taskSet)):
                 taskSet[i].setStartPIT(schedule.evaluate(taskSet[i].start_pit).as_long())
