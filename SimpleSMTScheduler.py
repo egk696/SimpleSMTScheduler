@@ -12,9 +12,7 @@ from z3 import *
 MY_DPI = 480
 SEC_TO_MS = 1000
 US_TO_MS = 0.001
-SYS_CLK = 0.0125
-WCT_PWM_US = 2200
-LISTEN_WIN = 500
+NS_TO_US = 1 / 1000
 
 taskSet = []
 tasksFileName = ""
@@ -27,15 +25,18 @@ interactive = False
 
 class Task:
     def __init__(self, period: float, deadline: float, execution: float, name: str, fixed_pit: int = None,
-                 elasticity: float = 0):
+                 later_pit: int = None, cfunc: str = "void"):
         self.name = name
         self.period = ceil(period)
         self.deadline = ceil(deadline)
         self.execution = ceil(execution)
         self.start_pit = Int(name + "_pit")
-        self.elasticity = elasticity
+        self.cfunc = cfunc
         if fixed_pit is not None:
             self.fixed_pit = fixed_pit
+
+        if later_pit is not None:
+            self.later_pit = later_pit
 
         print("--Task_" + name + "()")
         print("\tT=%s μs" % period)
@@ -58,7 +59,7 @@ def find_lcm(numbers):
     return lcm
 
 
-def gen_schedule(task_set):
+def gen_schedule(task_set, allocated_jitter):
     # Test utilization
     utilization = sum(t.execution / t.period for t in taskSet)
     print("\nUtilization = %s" % utilization)
@@ -76,20 +77,24 @@ def gen_schedule(task_set):
     # Search for task specific
     for task in task_set:
         # Each task should finish within the deadline
-        s.add(task.start_pit + task.execution < task.deadline)
+        # s.add(task.start_pit + task.execution < task.deadline)
         # If a task has a user fixed start PIT define it
         if hasattr(task, 'fixed_pit'):
             s.add(task.start_pit == task.fixed_pit)
+        elif hasattr(task, 'later_pit'):
+            s.add(task.start_pit >= task.later_pit)
         else:
             s.add(task.start_pit >= 0)
         # Constraints against the other tasks
         others = [o for o in task_set if o != task]
-        for jj in range(floor(hyper_period / task.period)):
+        for nn in range(floor(hyper_period / task.period)):
+            s.add(nn * task.period + task.start_pit + task.execution < nn * task.period + task.deadline)
             for ot in others:
-                # The start PIT should not fall within the execution of another task
+                # The start PIT should not fall within the execution of another task including a BAG
                 for kk in range(floor(hyper_period / task.period)):
-                    s.add(Or(jj * task.period + task.start_pit + task.execution < kk * ot.period + ot.start_pit,
-                             jj * task.period + task.start_pit > kk * ot.period + ot.start_pit + ot.execution))
+                    s.add(Or(
+                        nn * task.period + task.start_pit + task.execution + allocated_jitter < kk * ot.period + ot.start_pit,
+                        nn * task.period + task.start_pit > kk * ot.period + ot.start_pit + ot.execution + allocated_jitter))
 
     # Try to solve
     elapsed_time = 0
@@ -97,7 +102,7 @@ def gen_schedule(task_set):
     if s.check() == sat:
         m = s.model()
         elapsed_time = time() - start_time
-        print("\nSatisfied by the following activation times in μs:")
+        print("\nSatisfied by the following activation times:")
         print(m)
     else:
         m = None
@@ -127,7 +132,7 @@ def plot_schedule(task_set, hyper_period, periods):
     axis.set_xlim(0, periods * Sum([t.getStartPIT() + t.execution for t in task_set]))
     # axis.set_xlim(0, hyperPeriod * periods)
     # Setting labels for x-axis and y-axis
-    axis.set_xlabel('Schedule Timeline (μs)')
+    axis.set_xlabel('Schedule Timeline')
     axis.set_ylabel('Tasks')
 
     # axis.set_xticks(range(0, periods*Sum([t.getStartPIT()+t.execution for t in taskSet]), 5000))
@@ -175,58 +180,72 @@ if __name__ == "__main__":
 
     if len(sys.argv) > 1:
         try:
-            opts, args = getopt.getopt(sys.argv[1:], "hi:o:n:pv",
-                                       ["help", "itasks=", "osched=", "nperiods=", "plot", "verbose"])
+            opts, args = getopt.getopt(sys.argv[1:], "hi:o:j:n:pvc",
+                                       ["help", "itasks=", "osched=", "jitter=", "nperiods=", "plot", "verbose",
+                                        "code"])
         except getopt.GetoptError:
-            print('test.py -i <inputtasks> -o <outputschedule> -n <plotperiods> -p -v')
+            print('Try : SimpleSMTScheduler.py -i <inputtasks> -o <outputschedule> -j 35713 -n <plotperiods> -p -v')
+            print("Or : SimpleSMTScheduler.py --help")
             sys.exit(2)
         plot = False
         verbose = False
+        code = False
         schedulePlotPeriods = 1
+        jitter = 0
         for opt, arg in opts:
             if opt in ("-h", "--help"):
-                print('test.py -i <inputtasks> -o <outputschedule> -n <plotperiods> -p -v')
+                print('SimpleSMTScheduler.py -i <inputtasks> -o <outputschedule> -j 35713 -n <plotperiods> -p -v')
                 print("-h\t--help")
                 print("-i\t--itasks")
                 print("-o\t--osched")
+                print("-j\t--jitter")
                 print("-n\t--nperiods")
                 print("-p\t--plot")
                 print("-v\t--verbose")
+                print("-c\t--code")
                 sys.exit()
             elif opt in ("-i", "--itasks"):
                 tasksFileName = arg
             elif opt in ("-o", "--osched"):
                 scheduleFileName = arg
+            elif opt in ("-j", "--jitter"):
+                jitter = int(arg)
             elif opt in ("-n", "--nperiods"):
                 schedulePlotPeriods = int(arg)
             elif opt in ("-p", "--plot"):
                 plot = True
             elif opt in ("-v", "--verbose"):
                 verbose = True
+            elif opt in ("-c", "--code"):
+                code = True
     else:
+        code = False
         interactive = True
+        jitter = 0
 
     if interactive:
         tasksFileName = input("\nEnter the csv file for the tasks to be scheduled: ")
-        schedulePlotPeriods = int(input("\nEnter the number of hyper periods to be plotted: "))
-        verbose = input("\nEnable statistics (Yes/No)? ") == "Yes"
+        jitter = int(input("Enter the jitter allocation to be accounted for: "))
+        schedulePlotPeriods = int(input("Enter the number of hyper periods to be plotted: "))
+        verbose = input("Enable statistics (Yes/No)? ") == "Yes"
         print("\n")
 
     with open(tasksFileName, 'r') as f:
         reader = csv.reader(f)
         isFirstRow = True
+        rowIndex = 0
         for row in reader:
             if isFirstRow:
                 isFirstRow = False
-            else:
+            elif not str(row[0]).startswith("#"):
                 try:
                     period = float(row[0])
                 except ValueError:
                     period = 0
                 try:
-                    deadine = float(row[1])
+                    deadline = float(row[1])
                 except ValueError:
-                    deadine = 0
+                    deadline = 0
                 try:
                     execution = float(row[2])
                 except ValueError:
@@ -234,29 +253,44 @@ if __name__ == "__main__":
                 try:
                     name = str(row[3])
                 except ValueError:
-                    name = "SomeTask"
+                    name = "Task %s" % rowIndex
                 try:
                     fixed = float(row[4])
                 except ValueError:
                     fixed = None
-                taskSet.append(Task(period, deadine, execution, name, fixed))
+                try:
+                    later = float(row[5])
+                except ValueError:
+                    later = None
+                try:
+                    func = str(row[6])
+                except ValueError:
+                    func = "void"
 
-    if [t for t in taskSet if t.execution > t.period or t.execution > t.deadline]:
+                taskSet.append(Task(period, deadline, execution, name, fixed, later, func))
+                rowIndex = rowIndex + 1
+
+    if [t for t in taskSet if t.execution > t.deadline]:
         sys.exit("\nTask set is not valid.\nExecution times violate period and deadline constraints")
     else:
-        schedule, hyperPeriod = gen_schedule(taskSet)
+        schedule, hyperPeriod = gen_schedule(taskSet, jitter)
         if schedule is not None:
             for i in range(len(taskSet)):
                 taskSet[i].setStartPIT(schedule.evaluate(taskSet[i].start_pit).as_long())
 
             taskSet.sort(key=lambda x: x.getStartPIT())
 
-            schedulePlot = plot_schedule(taskSet, hyperPeriod, schedulePlotPeriods)
-
             if interactive:
+                schedulePlot = plot_schedule(taskSet, hyperPeriod, schedulePlotPeriods)
                 schedulePlot.show()
             elif plot:
+                schedulePlot = plot_schedule(taskSet, hyperPeriod, schedulePlotPeriods)
                 schedulePlot.savefig(scheduleFileName, dpi=MY_DPI)
+
+            if code:
+                for i in range(len(taskSet)):
+                    print("init_minimal_tttask(&taskSet[%s], %s, %s, %s);" % (
+                        i, taskSet[i].period, taskSet[i].getStartPIT(), taskSet[i].cfunc))
 
             sys.exit()
         else:

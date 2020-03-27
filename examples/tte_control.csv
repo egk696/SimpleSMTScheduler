@@ -1,0 +1,5 @@
+Period  ,Deadline,Execution,Name,Fixed Start,Later Than Start,Function
+10000000,10000000,90550    ,SYN ,0          ,None            ,&task_syn
+5000000 ,5000000 ,285450   ,RECV,1200000    ,None            ,&task_recv
+5000000 ,3600000 ,111712   ,PID ,None       ,1200000         ,&task_pid
+5000000 ,5000000 ,21050    ,SEND,3600000    ,None            ,&task_send

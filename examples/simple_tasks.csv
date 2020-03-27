@@ -1,6 +1,6 @@
-Period (us),Deadline (us),Execution (us),Name,Fixed Start (us)
-20000      ,20000        ,2304          ,ACT ,None
-5000       ,5000         ,300           ,RCV ,None
-10000      ,10000        ,238           ,SND ,None
-100000     ,100000       ,204           ,MON ,None
-5000       ,5000         ,475           ,SYN ,0
+Period,Deadline,Execution,Name,Fixed Start,Later Than Start,Function
+20000 ,20000   ,1500     ,T1  ,None       ,None            ,&task_1
+5000  ,5000    ,750      ,T2  ,None       ,None            ,&task_2
+10000 ,10000   ,500      ,T3  ,None       ,None            ,&task_3
+100000,100000  ,1500     ,T4  ,None       ,None            ,&task_4
+2500  ,2500    ,500      ,T5  ,None       ,None            ,&task_5

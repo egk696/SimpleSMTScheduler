@@ -1,0 +1,4 @@
+Period  ,Deadline,Execution,Name ,Fixed Start,Later Than Start,Function
+10000000,10000000,90550    ,SYN  ,0          ,None            ,&task_syn
+10000000,800000  ,317500   ,SENSE,None       ,None            ,&task_sense
+5000000 ,5000000 ,21050    ,SEND ,800000     ,None            ,&task_producer_send
