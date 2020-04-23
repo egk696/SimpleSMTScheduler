@@ -1,4 +1,5 @@
-Period  ,Deadline,Execution,Name ,Fixed Start,Later Than Start,Function
-10000000,10000000,90550    ,SYN  ,0          ,None            ,&task_syn
-5000000 ,5000000 ,285450   ,RECV ,4000000    ,None            ,&task_recv
-20000000,20000000,2005462  ,PULSE,None       ,4000000         ,&task_pulse
+Period  ,Execution,Deadline,"Offset
+",Jitter,Fixed Start,Name ,Function
+10000000,90550    ,10000000,0      ,0     ,0          ,SYN  ,&task_syn
+5000000 ,285450   ,5000000 ,0      ,0     ,4000000    ,RECV ,&task_recv
+20000000,2005462  ,9000000 ,4000000,0     ,None       ,PULSE,&task_pulse

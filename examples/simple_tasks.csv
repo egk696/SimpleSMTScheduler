@@ -1,6 +1,7 @@
-Period,Deadline,Execution,Name,Fixed Start,Later Than Start,Function
-20000 ,20000   ,1500     ,T1  ,None       ,None            ,&task_1
-5000  ,5000    ,750      ,T2  ,None       ,None            ,&task_2
-10000 ,10000   ,500      ,T3  ,None       ,None            ,&task_3
-100000,100000  ,1500     ,T4  ,None       ,None            ,&task_4
-2500  ,2500    ,500      ,T5  ,None       ,None            ,&task_5
+Period,Execution,Deadline,Offset,Jitter,Fixed Start,Name,Function
+20000 ,1500     ,20000   ,0     ,0     ,None       ,T1  ,&task_1
+5000  ,750      ,5000    ,0     ,0     ,None       ,T2  ,&task_2
+10000 ,500      ,10000   ,0     ,0     ,None       ,T3  ,&task_3
+100000,1500     ,100000  ,0     ,0     ,None       ,T4  ,&task_4
+2500  ,500      ,2500    ,0     ,0     ,None       ,T5  ,&task_5
+1000  ,10       ,1000    ,0     ,2000  ,None       ,T6  ,&task_6
