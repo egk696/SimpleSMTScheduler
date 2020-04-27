@@ -300,7 +300,7 @@ if __name__ == "__main__":
                 for pit in task.release_instances:
                     task.addStartPIT(schedule[pit].as_long())
 
-            taskSet.sort(key=lambda x: x.getStartPIT()[0])
+            # taskSet.sort(key=lambda x: x.getStartPIT()[0])
 
             if interactive:
                 schedulePlot = plot_schedule(taskSet, hyperPeriod, schedulePlotPeriods)
@@ -311,7 +311,8 @@ if __name__ == "__main__":
 
             print("Name\tActivation Instances\t")
             for i in range(len(taskSet)):
-                print("%s\t%s" % (taskSet[i].name, taskSet[i].getStartPIT()))
+                print("%s_sched_insts[%s] = %s;" % (taskSet[i].name, len(taskSet[i].getStartPIT()),
+                                                    str(taskSet[i].getStartPIT()).replace("[", "{").replace("]", "}")))
 
             sys.exit()
         else:
