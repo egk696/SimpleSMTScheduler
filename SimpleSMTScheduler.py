@@ -72,9 +72,6 @@ def z3_abs(x):
 
 
 def gen_schedule(task_set, wcet_gap):
-    # Test utilization
-    utilization = sum(t.execution / t.period for t in taskSet) * 100
-    print("\nUtilization = %s %%" % utilization)
     # Find the hyper period
     hyper_period = find_lcm([o.period for o in task_set])
     print("Schedule hyper period = %s" % hyper_period)
@@ -86,7 +83,7 @@ def gen_schedule(task_set, wcet_gap):
     # Search for task specific
     for test_task in task_set:
         for nn in range(len(test_task.release_instances)):
-            smt.add(test_task.release_instances[nn] + test_task.execution <= hyper_period)
+            smt.add(test_task.release_instances[nn] + test_task.execution <= hyper_period - wcet_gap)
             # If a task has a user fixed start PIT define it
             if hasattr(test_task, 'fixed_pit'):
                 smt.add(test_task.release_instances[nn] == nn * test_task.period + test_task.fixed_pit)
@@ -291,6 +288,10 @@ if __name__ == "__main__":
                 taskSet.append(Task(period, execution, deadline, offset, jitter, name, fixed, func))
                 rowIndex = rowIndex + 1
 
+    # Show Utilization
+    utilization = sum(t.execution / t.period for t in taskSet) * 100
+    print("\nUtilization = %s %%" % utilization)
+
     if [t for t in taskSet if t.execution > t.deadline]:
         sys.exit("\nTask set is not valid.\nExecution times violate period and deadline constraints")
     else:
@@ -311,8 +312,56 @@ if __name__ == "__main__":
 
             print("Name\tActivation Instances\t")
             for i in range(len(taskSet)):
-                print("%s_sched_insts[%s] = %s;" % (taskSet[i].name, len(taskSet[i].getStartPIT()),
-                                                    str(taskSet[i].getStartPIT()).replace("[", "{").replace("]", "}")))
+                print("schedtime_t %s_sched_insts[%s] = %s;" % (taskSet[i].name, len(taskSet[i].getStartPIT()),
+                                                                str(taskSet[i].getStartPIT()).replace("[", "{").replace(
+                                                                    "]", "}")))
+
+            if code:
+                f = open("simplesmtschedule.h", "w+")
+                f.write("#pragma once\r\n\r\n")
+                f.write("/*\r\n")
+                f.write(
+                    " * This file was generated using SimpleSMTScheduler (https://github.com/egk696/SimpleSMTScheduler)\r\n")
+                f.write(" * Generated schedule based on task set defined in %s\r\n" % tasksFileName)
+                f.write(" * Scheduled Task Set Utilization = %s %%\r\n" % utilization)
+                f.write(" */\r\n\r\n")
+                f.write("#define NUM_OF_TASKS %s\r\n" % len(taskSet))
+                f.write("#define HYPER_PERIOD %s\r\n\r\n" % hyperPeriod)
+                for i in range(len(taskSet)):
+                    f.write("#define %s_PERIOD %s\r\n" % (taskSet[i].name, taskSet[i].period))
+                f.write("\r\n")
+                f.write("schedtime_t tasks_periods[NUM_OF_TASKS] = {")
+                for i in range(len(taskSet)):
+                    if (i < len(taskSet) - 1):
+                        f.write("%s_PERIOD, " % taskSet[i].name)
+                    else:
+                        f.write("%s_PERIOD" % taskSet[i].name)
+                f.write("};\r\n")
+                f.write("\r\n")
+                for i in range(len(taskSet)):
+                    f.write("#define %s_INSTS_NUM %s\r\n" % (taskSet[i].name, len(taskSet[i].getStartPIT())))
+                f.write("\r\n")
+                f.write("unsigned tasks_insts_counts[NUM_OF_TASKS] = {")
+                for i in range(len(taskSet)):
+                    if (i < len(taskSet) - 1):
+                        f.write("%s_INSTS_NUM, " % taskSet[i].name)
+                    else:
+                        f.write("%s_INSTS_NUM" % taskSet[i].name)
+                f.write("};\r\n")
+                f.write("\r\n")
+                for i in range(len(taskSet)):
+                    f.write("schedtime_t %s_sched_insts[%s_INSTS_NUM] = %s;\r\n" % (taskSet[i].name, taskSet[i].name,
+                                                                                    str(taskSet[
+                                                                                            i].getStartPIT()).replace(
+                                                                                        "[", "{").replace("]", "}")))
+                f.write("\r\n")
+                f.write("schedtime_t *tasks_schedules[NUM_OF_TASKS] = {")
+                for i in range(len(taskSet)):
+                    if (i < len(taskSet) - 1):
+                        f.write("%s_sched_insts, " % taskSet[i].name)
+                    else:
+                        f.write("%s_sched_insts" % taskSet[i].name)
+                f.write("};\r\n")
 
             sys.exit()
         else:
