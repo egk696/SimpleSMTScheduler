@@ -1,5 +1,4 @@
-Period  ,Execution,Deadline,"Offset
-",Jitter,Fixed Start,Name ,Function
-10000000,90550    ,10000000,0      ,0     ,0          ,SYN  ,&task_syn
-5000000 ,285450   ,5000000 ,0      ,0     ,4000000    ,RECV ,&task_recv
-20000000,2005462  ,9000000 ,4000000,0     ,None       ,PULSE,&task_pulse
+Period  ,Execution,Deadline,Offset ,Jitter,Fixed Start,CPU ID,Name ,Function
+10000000,67175    ,10000000,0      ,0     ,0          ,3     ,SYN  ,&task_syn
+5000000 ,271062   ,5000000 ,0      ,0     ,4000000    ,3     ,RECV ,&task_recv
+20000000,2070937  ,9000000 ,4000000,0     ,None       ,3     ,PULSE,&task_pulse

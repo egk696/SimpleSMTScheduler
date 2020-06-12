@@ -1,5 +1,4 @@
 #!/usr/bin/python
-# Author: Eleftherios Kyriakakis
 
 import csv
 import getopt
@@ -25,14 +24,15 @@ interactive = False
 
 class Task:
 
-    def __init__(self, period: float, execution: float, deadline: float, offset: int, jitter: int,
+    def __init__(self, period: float, execution: float, deadline: float, offset: int, jitter: int, coreid: int,
                  name: str, fixed_pit: int = None, cfunc: str = "void"):
         self.name = name
         self.period = ceil(period)
         self.deadline = ceil(deadline)
         self.execution = ceil(execution)
-        self.offset = offset
+        self.offset = ceil(offset)
         self.jitter = ceil(jitter)
+        self.coreid = coreid
         self.release_instances = []
         self.cfunc = cfunc
         self.activation_instances = []
@@ -71,7 +71,7 @@ def z3_abs(x):
     return If(x >= 0, x, -x)
 
 
-def gen_schedule(task_set, wcet_gap):
+def gen_cyclic_schedule(task_set, wcet_gap):
     # Find the hyper period
     hyper_period = find_lcm([o.period for o in task_set])
     print("Schedule hyper period = %s" % hyper_period)
@@ -104,13 +104,14 @@ def gen_schedule(task_set, wcet_gap):
             # The start PIT should not fall within the execution of another task including a BAG
             for other_task in [o for o in task_set if o != test_task]:
                 for kk in range(len(other_task.release_instances)):
-                    smt.add(Or(
-                        test_task.release_instances[nn] + test_task.execution + wcet_gap <=
-                        other_task.release_instances[kk],
-                        test_task.release_instances[nn] >= other_task.release_instances[
-                            kk] + other_task.execution + wcet_gap
-                    )
-                    )
+                    if test_task.coreid == other_task.coreid:
+                        smt.add(Or(
+                            test_task.release_instances[nn] + test_task.execution + wcet_gap <=
+                            other_task.release_instances[kk],
+                            test_task.release_instances[nn] >= other_task.release_instances[
+                                kk] + other_task.execution + wcet_gap
+                        )
+                        )
     # Try to solve
     elapsed_time = 0
     start_time = time()
@@ -137,7 +138,7 @@ def gen_schedule(task_set, wcet_gap):
     return solution_model, hyper_period
 
 
-def plot_schedule(task_set, hyper_period, iterations):
+def plot_cyclic_schedule(task_set, hyper_period, iterations):
     # Declaring a figure "gnt"
     fig, axis = plt.subplots()
 
@@ -277,15 +278,19 @@ if __name__ == "__main__":
                 except ValueError:
                     fixed = None
                 try:
-                    name = str(row[6]).strip()
+                    coreid = float(row[6])
+                except ValueError:
+                    coreid = None
+                try:
+                    name = str(row[7]).strip()
                 except ValueError:
                     name = "Task %s" % rowIndex
                 try:
-                    func = str(row[7])
+                    func = str(row[8])
                 except ValueError:
                     func = "void"
 
-                taskSet.append(Task(period, execution, deadline, offset, jitter, name, fixed, func))
+                taskSet.append(Task(period, execution, deadline, offset, jitter, coreid, name, fixed, func))
                 rowIndex = rowIndex + 1
 
     # Show Utilization
@@ -295,7 +300,7 @@ if __name__ == "__main__":
     if [t for t in taskSet if t.execution > t.deadline]:
         sys.exit("\nTask set is not valid.\nExecution times violate period and deadline constraints")
     else:
-        schedule, hyperPeriod = gen_schedule(taskSet, wcet_offset)
+        schedule, hyperPeriod = gen_cyclic_schedule(taskSet, wcet_offset)
         if schedule is not None:
             for task in taskSet:
                 for pit in task.release_instances:
@@ -304,10 +309,10 @@ if __name__ == "__main__":
             # taskSet.sort(key=lambda x: x.getStartPIT()[0])
 
             if interactive:
-                schedulePlot = plot_schedule(taskSet, hyperPeriod, schedulePlotPeriods)
+                schedulePlot = plot_cyclic_schedule(taskSet, hyperPeriod, schedulePlotPeriods)
                 schedulePlot.show()
             elif plot:
-                schedulePlot = plot_schedule(taskSet, hyperPeriod, schedulePlotPeriods)
+                schedulePlot = plot_cyclic_schedule(taskSet, hyperPeriod, schedulePlotPeriods)
                 schedulePlot.savefig(scheduleFileName, dpi=MY_DPI)
 
             print("Name\tActivation Instances\t")
