@@ -72,10 +72,6 @@ if __name__ == "__main__":
     print("Importing task set from file source...\n")
     parse_csv_taskset(tasksFileName, taskSet)
 
-    # Show Utilization
-    utilization = sum(t.execution / t.period for t in taskSet) * 100
-    print("\nUtilization = %s %%" % utilization)
-
     if [t for t in taskSet if t.execution > t.deadline]:
         sys.exit("\nTask set is not valid.\nExecution time violate period and deadline constraints")
     elif [t for t in taskSet if t.deadline > t.period]:
@@ -83,11 +79,13 @@ if __name__ == "__main__":
     elif [t for t in taskSet if t.offset > t.period]:
         sys.exit("\nTask set is not valid.\nOffset times violate period constraints")
     else:
-        schedule, hyperPeriod, elapsedTime = gen_cyclic_schedule_model(taskSet, wcet_offset, verbose)
+        schedule, utilization, hyperPeriod, elapsedTime = gen_cyclic_schedule_model(taskSet, wcet_offset, verbose)
         if schedule is not None:
             gen_schedule_activations(schedule, taskSet)
 
             print("\nSolver completed in %s ms\n" % (elapsedTime * SEC_TO_MS))
+
+            print("Utilization = %s %%\n" % utilization)
 
             print("Schedule hyper period = %s\n" % hyperPeriod)
 

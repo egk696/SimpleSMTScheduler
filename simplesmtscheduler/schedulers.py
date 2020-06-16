@@ -6,6 +6,7 @@ from simplesmtscheduler.utilities import *
 def gen_cyclic_schedule_model(task_set, wcet_gap, verbose=False):
     # Find the hyper period
     hyper_period = find_lcm([o.period for o in task_set])
+    utilization = sum(t.execution / t.period for t in task_set) * 100
     # Define constraints
     smt = Solver()
     for task in task_set:
@@ -63,7 +64,7 @@ def gen_cyclic_schedule_model(task_set, wcet_gap, verbose=False):
         for k, v in smt.statistics():
             print("%s : %s" % (k, v))
 
-    return solution_model, hyper_period, elapsed_time
+    return solution_model, utilization, hyper_period, elapsed_time
 
 
 def gen_schedule_activations(schedule, task_set):
