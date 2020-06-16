@@ -3,10 +3,9 @@ from time import *
 from simplesmtscheduler.utilities import *
 
 
-def gen_cyclic_schedule(task_set, wcet_gap, verbose=False):
+def gen_cyclic_schedule_model(task_set, wcet_gap, verbose=False):
     # Find the hyper period
     hyper_period = find_lcm([o.period for o in task_set])
-    print("Schedule hyper period = %s" % hyper_period)
     # Define constraints
     smt = Solver()
     for task in task_set:
@@ -15,6 +14,7 @@ def gen_cyclic_schedule(task_set, wcet_gap, verbose=False):
         task.releas_itr = iter(task.release_instances)
     # Search for task specific
     for test_task in task_set:
+        jitter = Int('jitter')
         prev_test_release_inst = None
         for nn in range(len(test_task.release_instances)):
             test_release_inst = next(test_task.releas_itr)
@@ -52,7 +52,6 @@ def gen_cyclic_schedule(task_set, wcet_gap, verbose=False):
     else:
         solution_model = None
         time() - start_time
-        print("\nCould not be solved: ", str(smt.check()))
 
     if verbose:
         print("\nModel Solution:")
@@ -64,6 +63,10 @@ def gen_cyclic_schedule(task_set, wcet_gap, verbose=False):
         for k, v in smt.statistics():
             print("%s : %s" % (k, v))
 
-    print("\nSolver completed in %s ms\n" % (elapsed_time * SEC_TO_MS))
+    return solution_model, hyper_period, elapsed_time
 
-    return solution_model, hyper_period
+
+def gen_schedule_activations(schedule, task_set):
+    for task in task_set:
+        for pit in task.release_instances:
+            task.addStartPIT(schedule[pit].as_long())

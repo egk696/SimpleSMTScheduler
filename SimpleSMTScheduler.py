@@ -1,9 +1,7 @@
 #!/usr/bin/python
 
-import csv
 import getopt
 
-from simplesmtscheduler.PeriodicTask import *
 from simplesmtscheduler.schedulers import *
 from simplesmtscheduler.utilities import *
 
@@ -71,54 +69,8 @@ if __name__ == "__main__":
         schedulePlotPeriods = int(input("Enter the number of hyper periods to be plotted: "))
         verbose = input("Enable statistics (Yes/No)? ") == "Yes"
 
-    with open(tasksFileName, 'r') as f:
-        print("Importing task set from file source...\n")
-        reader = csv.reader(f)
-        isFirstRow = True
-        rowIndex = 0
-        for row in reader:
-            if isFirstRow:
-                isFirstRow = False
-            elif not str(row[0]).startswith("#"):
-                try:
-                    period = float(row[0])
-                except ValueError:
-                    period = 0
-                try:
-                    execution = float(row[1])
-                except ValueError:
-                    execution = 0
-                try:
-                    deadline = float(row[2])
-                except ValueError:
-                    deadline = 0
-                try:
-                    offset = float(row[3])
-                except ValueError:
-                    offset = 0
-                try:
-                    jitter = float(row[4])
-                except ValueError:
-                    jitter = 0
-                try:
-                    fixed = float(row[5])
-                except ValueError:
-                    fixed = None
-                try:
-                    coreid = float(row[6])
-                except ValueError:
-                    coreid = None
-                try:
-                    name = str(row[7]).strip()
-                except ValueError:
-                    name = "Task %s" % rowIndex
-                try:
-                    func = str(row[8])
-                except ValueError:
-                    func = "void"
-
-                taskSet.append(PeriodicTask(period, execution, deadline, offset, jitter, coreid, name, fixed, func))
-                rowIndex = rowIndex + 1
+    print("Importing task set from file source...\n")
+    parse_csv_taskset(tasksFileName, taskSet)
 
     # Show Utilization
     utilization = sum(t.execution / t.period for t in taskSet) * 100
@@ -131,26 +83,27 @@ if __name__ == "__main__":
     elif [t for t in taskSet if t.offset > t.period]:
         sys.exit("\nTask set is not valid.\nOffset times violate period constraints")
     else:
-        schedule, hyperPeriod = gen_cyclic_schedule(taskSet, wcet_offset, verbose)
+        schedule, hyperPeriod, elapsedTime = gen_cyclic_schedule_model(taskSet, wcet_offset, verbose)
         if schedule is not None:
-            for task in taskSet:
-                for pit in task.release_instances:
-                    task.addStartPIT(schedule[pit].as_long())
+            gen_schedule_activations(schedule, taskSet)
+
+            print("\nSolver completed in %s ms\n" % (elapsedTime * SEC_TO_MS))
+
+            print("Schedule hyper period = %s\n" % hyperPeriod)
 
             taskSet.sort(reverse=True, key=lambda x: x.getStartPIT()[0])
-
-            if interactive:
-                schedulePlot = plot_cyclic_schedule(taskSet, hyperPeriod, schedulePlotPeriods)
-                schedulePlot.show()
-            elif plot:
-                schedulePlot = plot_cyclic_schedule(taskSet, hyperPeriod, schedulePlotPeriods)
-                schedulePlot.savefig(scheduleFileName, dpi=MY_DPI)
 
             print("Name\tActivation Instances\t")
             for i in range(len(taskSet)):
                 print("schedtime_t %s_sched_insts[%s] = %s;" % (taskSet[i].name, len(taskSet[i].getStartPIT()),
                                                                 str(taskSet[i].getStartPIT()).replace("[", "{").replace(
                                                                     "]", "}")))
+            if interactive:
+                schedulePlot = plot_cyclic_schedule(taskSet, hyperPeriod, schedulePlotPeriods)
+                schedulePlot.show()
+            elif plot:
+                schedulePlot = plot_cyclic_schedule(taskSet, hyperPeriod, schedulePlotPeriods)
+                schedulePlot.savefig(scheduleFileName, dpi=MY_DPI)
 
             if code:
                 gen_schedule_code("simplesmtschedule.h", tasksFileName, taskSet, hyperPeriod, utilization)
