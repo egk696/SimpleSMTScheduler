@@ -131,7 +131,7 @@ if __name__ == "__main__":
     elif [t for t in taskSet if t.offset > t.period]:
         sys.exit("\nTask set is not valid.\nOffset times violate period constraints")
     else:
-        schedule, hyperPeriod = gen_cyclic_schedule(taskSet, wcet_offset)
+        schedule, hyperPeriod = gen_cyclic_schedule(taskSet, wcet_offset, verbose)
         if schedule is not None:
             for task in taskSet:
                 for pit in task.release_instances:

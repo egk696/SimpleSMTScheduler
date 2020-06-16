@@ -3,7 +3,7 @@ from time import *
 from simplesmtscheduler.utilities import *
 
 
-def gen_cyclic_schedule(task_set, wcet_gap, plot=True, verbose=True, interactive=False):
+def gen_cyclic_schedule(task_set, wcet_gap, verbose=False):
     # Find the hyper period
     hyper_period = find_lcm([o.period for o in task_set])
     print("Schedule hyper period = %s" % hyper_period)
