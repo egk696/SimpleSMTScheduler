@@ -4,7 +4,7 @@ from math import *
 import matplotlib.pyplot as plt
 from z3 import *
 
-from simplesmtscheduler.taskdefs import PeriodicTask
+from project.server.scheduling.simplesmtscheduler.taskdefs import PeriodicTask
 
 MY_DPI = 480
 SEC_TO_MS = 1000
