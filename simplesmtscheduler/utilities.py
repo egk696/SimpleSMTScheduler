@@ -24,53 +24,57 @@ def z3_abs(x):
 
 
 def parse_csv_taskset(csv_file, task_set):
-    with open(csv_file, 'r') as f:
-        reader = csv.reader(f)
-        is_first_row = True
-        row_index = 0
-        for row in reader:
-            if is_first_row:
-                is_first_row = False
-            elif not str(row[0]).startswith("#"):
-                try:
-                    period = float(row[0])
-                except ValueError:
-                    period = 0
-                try:
-                    execution = float(row[1])
-                except ValueError:
-                    execution = 0
-                try:
-                    deadline = float(row[2])
-                except ValueError:
-                    deadline = 0
-                try:
-                    offset = float(row[3])
-                except ValueError:
-                    offset = 0
-                try:
-                    jitter = float(row[4])
-                except ValueError:
-                    jitter = 0
-                try:
-                    fixed = float(row[5])
-                except ValueError:
-                    fixed = None
-                try:
-                    coreid = float(row[6])
-                except ValueError:
-                    coreid = None
-                try:
-                    name = str(row[7]).strip()
-                except ValueError:
-                    name = "Task %s" % row_index
-                try:
-                    func = str(row[8])
-                except ValueError:
-                    func = "void"
+    if isinstance(csv_file, io.StringIO):
+        f = csv_file
+    else:
+        f = open(csv_file, 'r')
+    reader = csv.reader(f)
+    is_first_row = True
+    row_index = 0
+    for row in reader:
+        if is_first_row:
+            is_first_row = False
+        elif not str(row[0]).startswith("#"):
+            try:
+                period = float(row[0])
+            except ValueError:
+                period = 0
+            try:
+                execution = float(row[1])
+            except ValueError:
+                execution = 0
+            try:
+                deadline = float(row[2])
+            except ValueError:
+                deadline = 0
+            try:
+                offset = float(row[3])
+            except ValueError:
+                offset = 0
+            try:
+                jitter = float(row[4])
+            except ValueError:
+                jitter = 0
+            try:
+                fixed = float(row[5])
+            except ValueError:
+                fixed = None
+            try:
+                coreid = float(row[6])
+            except ValueError:
+                coreid = None
+            try:
+                name = str(row[7]).strip()
+            except ValueError:
+                name = "Task %s" % row_index
+            try:
+                func = str(row[8])
+            except ValueError:
+                func = "void"
 
-                task_set.append(PeriodicTask(period, execution, deadline, offset, jitter, coreid, name, fixed, func))
-                row_index = row_index + 1
+            task_set.append(PeriodicTask(period, execution, deadline, offset, jitter, coreid, name, fixed, func))
+            row_index = row_index + 1
+    f.close()
 
 
 def plot_cyclic_schedule(task_set, hyper_period, iterations):
