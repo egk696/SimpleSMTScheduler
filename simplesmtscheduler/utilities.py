@@ -1,9 +1,10 @@
 import csv
+import shutil
 from math import *
 
 import matplotlib.pyplot as plt
 from z3 import *
-
+from io import StringIO
 from project.server.scheduling.simplesmtscheduler.taskdefs import PeriodicTask
 
 MY_DPI = 480
@@ -123,49 +124,59 @@ def plot_cyclic_schedule(task_set, hyper_period, iterations):
     return plt
 
 
-def gen_schedule_code(file_name, tasks_file_name, task_set, hyper_period, utilization):
-    f = open(file_name, "w+")
-    f.write("#pragma once\r\n\r\n")
-    f.write("/*\r\n")
-    f.write(
+def gen_schedule_code(file_name, tasks_file_name, task_set, hyper_period, utilization, isCli = False):
+    wr_buf = StringIO()
+
+    wr_buf.write("#pragma once\r\n\r\n")
+    wr_buf.write("/*\r\n")
+    wr_buf.write(
         " * This file was generated using SimpleSMTScheduler (https://github.com/egk696/SimpleSMTScheduler)\r\n")
-    f.write(" * Generated schedule based on task set defined in %s\r\n" % tasks_file_name)
-    f.write(" * Scheduled Task Set Utilization = %s %%\r\n" % utilization)
-    f.write(" */\r\n\r\n")
-    f.write("#define NUM_OF_TASKS %s\r\n" % len(task_set))
-    f.write("#define HYPER_PERIOD %s\r\n\r\n" % hyper_period)
+    wr_buf.write(" * Generated schedule based on task set defined in %s\r\n" % tasks_file_name)
+    wr_buf.write(" * Scheduled Task Set Utilization = %s %%\r\n" % utilization)
+    wr_buf.write(" */\r\n\r\n")
+    wr_buf.write("#define NUM_OF_TASKS %s\r\n" % len(task_set))
+    wr_buf.write("#define HYPER_PERIOD %s\r\n\r\n" % hyper_period)
     for i in range(len(task_set)):
-        f.write("#define %s_PERIOD %s\r\n" % (task_set[i].name, task_set[i].period))
-    f.write("\r\n")
-    f.write("schedtime_t tasks_periods[NUM_OF_TASKS] = {")
-    for i in range(len(task_set)):
-        if (i < len(task_set) - 1):
-            f.write("%s_PERIOD, " % task_set[i].name)
-        else:
-            f.write("%s_PERIOD" % task_set[i].name)
-    f.write("};\r\n")
-    f.write("\r\n")
-    for i in range(len(task_set)):
-        f.write("#define %s_INSTS_NUM %s\r\n" % (task_set[i].name, len(task_set[i].getStartPIT())))
-    f.write("\r\n")
-    f.write("unsigned tasks_insts_counts[NUM_OF_TASKS] = {")
+        wr_buf.write("#define %s_PERIOD %s\r\n" % (task_set[i].name, task_set[i].period))
+    wr_buf.write("\r\n")
+    wr_buf.write("schedtime_t tasks_periods[NUM_OF_TASKS] = {")
     for i in range(len(task_set)):
         if (i < len(task_set) - 1):
-            f.write("%s_INSTS_NUM, " % task_set[i].name)
+            wr_buf.write("%s_PERIOD, " % task_set[i].name)
         else:
-            f.write("%s_INSTS_NUM" % task_set[i].name)
-    f.write("};\r\n")
-    f.write("\r\n")
+            wr_buf.write("%s_PERIOD" % task_set[i].name)
+    wr_buf.write("};\r\n")
+    wr_buf.write("\r\n")
     for i in range(len(task_set)):
-        f.write("schedtime_t %s_sched_insts[%s_INSTS_NUM] = %s;\r\n" % (task_set[i].name, task_set[i].name,
+        wr_buf.write("#define %s_INSTS_NUM %s\r\n" % (task_set[i].name, len(task_set[i].getStartPIT())))
+    wr_buf.write("\r\n")
+    wr_buf.write("unsigned tasks_insts_counts[NUM_OF_TASKS] = {")
+    for i in range(len(task_set)):
+        if (i < len(task_set) - 1):
+            wr_buf.write("%s_INSTS_NUM, " % task_set[i].name)
+        else:
+            wr_buf.write("%s_INSTS_NUM" % task_set[i].name)
+    wr_buf.write("};\r\n")
+    wr_buf.write("\r\n")
+    for i in range(len(task_set)):
+        wr_buf.write("schedtime_t %s_sched_insts[%s_INSTS_NUM] = %s;\r\n" % (task_set[i].name, task_set[i].name,
                                                                         str(task_set[
                                                                                 i].getStartPIT()).replace(
                                                                             "[", "{").replace("]", "}")))
-    f.write("\r\n")
-    f.write("schedtime_t *tasks_schedules[NUM_OF_TASKS] = {")
+    wr_buf.write("\r\n")
+    wr_buf.write("schedtime_t *tasks_schedules[NUM_OF_TASKS] = {")
     for i in range(len(task_set)):
         if (i < len(task_set) - 1):
-            f.write("%s_sched_insts, " % task_set[i].name)
+            wr_buf.write("%s_sched_insts, " % task_set[i].name)
         else:
-            f.write("%s_sched_insts" % task_set[i].name)
-    f.write("};\r\n")
+            wr_buf.write("%s_sched_insts" % task_set[i].name)
+    wr_buf.write("};\r\n")
+
+    if isCli:
+        with open(file_name, 'w') as fd:
+            wr_buf.seek(0)
+            shutil.copyfileobj(wr_buf, fd)
+        return 1
+    else:
+        return wr_buf
+
