@@ -26,9 +26,9 @@ class PeriodicTask:
         print("  D=%s," % deadline)
         print("  O=%s," % offset)
         print("  J=%s," % jitter)
-        print("};")
         if fixed_pit is not None:
-            print("\tS=%s μs" % fixed_pit)
+            print("  S=%s μs" % fixed_pit)
+        print("};")
 
     def addStartPIT(self, pit: float):
         self.activation_instances.append(pit)

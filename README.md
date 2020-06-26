@@ -1,6 +1,8 @@
 # SimpleSMTScheduler
 A simple SMT-based schedule generator for cyclic executives real-time tasks
 
+To quickly use the application online please visit us at: [Simple Cyclic Scheduler Online](https://simplescheduleronline.herokuapp.com/)  
+
 # Usage
 The application can run in two modes, either interactive or via command-line. 
 When the application is started with no arguments it implicitly enters interactive mode.
