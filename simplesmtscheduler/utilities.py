@@ -1,11 +1,12 @@
 import csv
 import shutil
+from io import StringIO
 from math import *
 
 import matplotlib.pyplot as plt
 from z3 import *
-from io import StringIO
-from project.server.scheduling.simplesmtscheduler.taskdefs import PeriodicTask
+
+from simplesmtscheduler.taskdefs import *
 
 MY_DPI = 480
 SEC_TO_MS = 1000
@@ -128,7 +129,7 @@ def plot_cyclic_schedule(task_set, hyper_period, iterations):
     return plt
 
 
-def gen_schedule_code(file_name, tasks_file_name, task_set, hyper_period, utilization, isCli = False):
+def gen_schedule_code(file_name, tasks_file_name, task_set, hyper_period, utilization, isCli=False):
     wr_buf = StringIO()
 
     wr_buf.write("#pragma once\r\n\r\n")
@@ -164,9 +165,9 @@ def gen_schedule_code(file_name, tasks_file_name, task_set, hyper_period, utiliz
     wr_buf.write("\r\n")
     for i in range(len(task_set)):
         wr_buf.write("schedtime_t %s_sched_insts[%s_INSTS_NUM] = %s;\r\n" % (task_set[i].name, task_set[i].name,
-                                                                        str(task_set[
-                                                                                i].getStartPIT()).replace(
-                                                                            "[", "{").replace("]", "}")))
+                                                                             str(task_set[
+                                                                                     i].getStartPIT()).replace(
+                                                                                 "[", "{").replace("]", "}")))
     wr_buf.write("\r\n")
     wr_buf.write("schedtime_t *tasks_schedules[NUM_OF_TASKS] = {")
     for i in range(len(task_set)):
@@ -183,4 +184,3 @@ def gen_schedule_code(file_name, tasks_file_name, task_set, hyper_period, utiliz
         return 1
     else:
         return wr_buf
-

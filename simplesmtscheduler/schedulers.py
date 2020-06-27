@@ -1,6 +1,6 @@
 from time import *
 
-from project.server.scheduling.simplesmtscheduler.utilities import *
+from simplesmtscheduler.utilities import *
 
 
 def gen_cyclic_schedule_model(task_set, wcet_gap, verbose=False):
