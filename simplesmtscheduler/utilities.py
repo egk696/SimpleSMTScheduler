@@ -121,7 +121,7 @@ def plot_cyclic_schedule(task_set, hyper_period, iterations):
 
     # Rotate labels to fit nicely
     fig.autofmt_xdate()
-
+    fig.tight_layout()
     return plt
 
 
