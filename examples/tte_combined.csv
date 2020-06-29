@@ -1,11 +1,11 @@
-Period  ,Execution,Deadline,Offset ,Jitter,Fixed Start,CPU ID,Name   ,Function
-10000000,67175    ,10000000,0      ,0     ,None       ,0     ,S_SYN  ,&sensor_syn
-5000000 ,153413   ,800000  ,0      ,0     ,None       ,0     ,S_SENSE,&sensor_sense
-5000000 ,28300    ,5000000 ,0      ,0     ,800000     ,0     ,S_SEND ,&sensor_send
-10000000,75063    ,10000000,0      ,0     ,0          ,1     ,C_SYN  ,&control_syn
-5000000 ,271062   ,5000000 ,0      ,0     ,1200000    ,1     ,C_RECV ,&control_recv
-5000000 ,485050   ,3600000 ,1200000,0     ,None       ,1     ,C_ANGLE,&control_pid
-5000000 ,28300    ,5000000 ,0      ,0     ,3600000    ,1     ,C_SEND ,&control_send
-10000000,67175    ,10000000,0      ,0     ,0          ,2     ,A_SYN  ,&actuator_syn
-5000000 ,271062   ,5000000 ,0      ,0     ,4000000    ,2     ,A_RECV ,&actuator_recv
-20000000,2070937  ,9000000 ,4000000,0     ,None       ,2     ,A_PWM  ,&actuator_pulse
+Period  ,Execution,Deadline,Offset ,Jitter,CPU ID,Name   ,Function
+10000000,67175    ,10000000,0      ,0     ,0     ,S_SYN  ,&sensor_syn
+5000000 ,153413   ,800000  ,0      ,0     ,0     ,S_SENSE,&sensor_sense
+5000000 ,28300    ,5000000 ,800000 ,0     ,0     ,S_SEND ,&sensor_send
+10000000,75063    ,10000000,0      ,0     ,1     ,C_SYN  ,&control_syn
+5000000 ,271062   ,5000000 ,1200000,0     ,1     ,C_RECV ,&control_recv
+5000000 ,485050   ,3600000 ,1200000,0     ,1     ,C_ANGLE,&control_pid
+5000000 ,28300    ,5000000 ,3600000,0     ,1     ,C_SEND ,&control_send
+10000000,67175    ,10000000,0      ,0     ,2     ,A_SYN  ,&actuator_syn
+5000000 ,271062   ,5000000 ,4000000,0     ,2     ,A_RECV ,&actuator_recv
+20000000,2070937  ,9000000 ,4000000,0     ,2     ,A_PWM  ,&actuator_pulse

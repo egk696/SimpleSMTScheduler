@@ -1,4 +1,4 @@
-Period  ,Execution,Deadline,Offset,Jitter,Fixed Start,CPU ID,Name ,Function
-10000000,67175    ,10000000,0     ,0     ,None       ,1     ,SYN  ,&task_syn
-5000000 ,153413   ,800000  ,0     ,0     ,None       ,1     ,SENSE,&task_sense
-5000000 ,28300    ,5000000 ,0     ,0     ,800000     ,1     ,SEND ,&task_producer_send
+Period  ,Execution,Deadline,Offset,Jitter,CPU ID,Name ,Function
+10000000,67175    ,10000000,0     ,0     ,1     ,SYN  ,&task_syn
+5000000 ,153413   ,800000  ,0     ,0     ,1     ,SENSE,&task_sense
+5000000 ,28300    ,5000000 ,800000,0     ,1     ,SEND ,&task_producer_send

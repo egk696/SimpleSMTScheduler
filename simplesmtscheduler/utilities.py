@@ -58,23 +58,19 @@ def parse_csv_taskset(csv_file, task_set):
             except ValueError:
                 jitter = 0
             try:
-                fixed = float(row[5])
-            except ValueError:
-                fixed = None
-            try:
-                coreid = float(row[6])
+                coreid = int(row[5])
             except ValueError:
                 coreid = None
             try:
-                name = str(row[7]).strip()
+                name = str(row[6]).strip()
             except ValueError:
                 name = "Task %s" % row_index
             try:
-                func = str(row[8])
+                func = str(row[7])
             except ValueError:
                 func = "void"
 
-            task_set.append(PeriodicTask(period, execution, deadline, offset, jitter, coreid, name, fixed, func))
+            task_set.append(PeriodicTask(period, execution, deadline, offset, jitter, coreid, name, func))
             row_index = row_index + 1
     f.close()
 

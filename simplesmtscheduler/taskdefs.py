@@ -3,8 +3,8 @@ from math import ceil
 
 class PeriodicTask:
 
-    def __init__(self, period: float, execution: float, deadline: float, offset: int, jitter: int, coreid: int,
-                 name: str, fixed_pit: int = None, cfunc: str = "void"):
+    def __init__(self, period: float, execution: float, deadline: float, offset: float, jitter: float, coreid: int,
+                 name: str, cfunc: str = "void"):
         self.name = name
         self.period = ceil(period)
         self.deadline = ceil(deadline)
@@ -17,17 +17,12 @@ class PeriodicTask:
         self.cfunc = cfunc
         self.activation_instances = []  # result
 
-        if fixed_pit is not None:
-            self.fixed_pit = fixed_pit
-
         print("Task_" + name + " {")
         print("  T=%s," % period)
         print("  C=%s," % execution)
         print("  D=%s," % deadline)
         print("  O=%s," % offset)
         print("  J=%s," % jitter)
-        if fixed_pit is not None:
-            print("  S=%s μs" % fixed_pit)
         print("};")
 
     def addStartPIT(self, pit: float):
