@@ -11,7 +11,9 @@ wcet_offset = 0
 verbose = False
 schedulePlotPeriods = 1
 
-tasks_data = "Period,Execution,Deadline,Offset,Jitter,Fixed Start,CPU ID,Name,Function\n5 ,2 ,5 ,0 ,2 ,None ,0 ,T1 ,&task_1\n7 ,4 ,7 ,0 ,2 ,None ,0 ,T2 ,&task_2"
+tasks_data = "Period,Execution,Deadline,Offset,Jitter,CPU ID,Fixed Start,Name,Function\n" \
+             "5 ,2 ,5 ,0 ,2 ,0 ,None ,T1 ,&task_1\n" \
+             "7 ,4 ,7 ,0 ,2 ,0 ,None ,T2 ,&task_2"
 file = io.StringIO(tasks_data)
 csv.writer(file)
 

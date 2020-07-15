@@ -21,8 +21,11 @@ def gen_cyclic_schedule_model(task_set, wcet_gap, verbose=False):
             test_release_inst = next(test_task.releas_itr)
             # We only check release instances that fit within a hyperperiod
             smt.add(test_release_inst + test_task.execution <= hyper_period - wcet_gap)
-            # If a task has a user fixed start PIT define it
-            smt.add(test_release_inst >= nn * test_task.period + test_task.offset)
+            # If a task has a user fixed start PIT define it otherwise use offset
+            if hasattr(test_task, 'fixed_pit'):
+                smt.add(test_release_inst == nn * test_task.period + test_task.fixed_pit)
+            else:
+                smt.add(test_release_inst >= nn * test_task.period + test_task.offset)
             # Period constraint including jitter
             if prev_test_release_inst is not None:
                 smt.add(And(
