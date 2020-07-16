@@ -1,4 +1,4 @@
-Period  ,Execution,Deadline,Offset ,Jitter,CPU ID,Name ,Function
-10000000,67175    ,10000000,0      ,0     ,3     ,SYN  ,&task_syn
-5000000 ,271062   ,5000000 ,4000000,0     ,3     ,RECV ,&task_recv
-20000000,2070937  ,9000000 ,4000000,0     ,3     ,PULSE,&task_pulse
+Period  ,Execution,Deadline,Offset ,Jitter,CPU ID,Fixed Start,Name  ,Function
+10000000,67175    ,10000000,0      ,0     ,3     ,None       ,ASYN  ,&task_asyn
+5000000 ,271062   ,5000000 ,0      ,0     ,3     ,4000000    ,ARECV ,&task_arecv
+20000000,2070937  ,9000000 ,4000000,0     ,3     ,None       ,APULSE,&task_apulse

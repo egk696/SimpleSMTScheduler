@@ -17,7 +17,7 @@ tasks_data = "Period,Execution,Deadline,Offset,Jitter,CPU ID,Fixed Start,Name,Fu
 file = io.StringIO(tasks_data)
 csv.writer(file)
 
-parse_csv_taskset(file, taskSet)
+parse_csv_taskset(tasksFileName, taskSet)
 schedule, utilization, hyperPeriod, elapsedTime = gen_cyclic_schedule_model(taskSet, wcet_offset, verbose)
 if schedule is not None:
     gen_schedule_activations(schedule, taskSet)
