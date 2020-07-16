@@ -8,7 +8,7 @@ def gen_cyclic_schedule_model(task_set, wcet_gap, verbose=False):
     hyper_period = find_lcm([o.period for o in task_set])
     utilization = sum(t.execution / t.period for t in task_set) * 100
     # Define constraints
-    smt = Solver()
+    smt = Optimize()
     for task in task_set:
         for nn in range(floor(hyper_period / task.period)):
             task.release_instances.append(Int(task.name + "_" + "inst_" + str(nn)))
@@ -19,6 +19,7 @@ def gen_cyclic_schedule_model(task_set, wcet_gap, verbose=False):
         prev_test_release_inst = None
         for nn in range(len(test_task.release_instances)):
             test_release_inst = next(test_task.releas_itr)
+            h = smt.minimize(test_release_inst)
             # We only check release instances that fit within a hyperperiod
             smt.add(test_release_inst + test_task.execution <= hyper_period - wcet_gap)
             # If a task has a user fixed start PIT define it otherwise use offset
