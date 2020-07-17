@@ -8,7 +8,10 @@ def gen_cyclic_schedule_model(task_set, wcet_gap, optimize=False, verbose=False)
     hyper_period = find_lcm([o.period for o in task_set])
     utilization = sum(t.execution / t.period for t in task_set) * 100
     # Define constraints
-    smt = Optimize()
+    if optimize:
+        smt = Optimize()
+    else:
+        smt = Solver()
     for task in task_set:
         for nn in range(floor(hyper_period / task.period)):
             task.release_instances.append(Int(task.name + "_" + "inst_" + str(nn)))
