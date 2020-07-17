@@ -89,8 +89,6 @@ if __name__ == "__main__":
 
             print("Schedule hyper period = %s\n" % hyperPeriod)
 
-            taskSet.sort(reverse=True, key=lambda x: x.getStartPIT()[0])
-
             print("Name\tActivation Instances\t")
             for i in range(len(taskSet)):
                 print("schedtime_t %s_sched_insts[%s] = %s;" % (taskSet[i].name, len(taskSet[i].getStartPIT()),

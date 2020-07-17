@@ -15,11 +15,9 @@ def gen_cyclic_schedule_model(task_set, wcet_gap, verbose=False):
         task.releas_itr = iter(task.release_instances)
     # Search for task specific
     for test_task in task_set:
-        jitter = Int('jitter')
         prev_test_release_inst = None
         for nn in range(len(test_task.release_instances)):
             test_release_inst = next(test_task.releas_itr)
-            h = smt.minimize(test_release_inst)
             # We only check release instances that fit within a hyperperiod
             smt.add(test_release_inst + test_task.execution <= hyper_period - wcet_gap)
             # If a task has a user fixed start PIT define it otherwise use offset
@@ -44,6 +42,7 @@ def gen_cyclic_schedule_model(task_set, wcet_gap, verbose=False):
                             test_release_inst + test_task.execution + wcet_gap <= other_release_inst,
                             test_release_inst >= other_release_inst + other_task.execution + wcet_gap
                         ))
+            # h = smt.minimize(test_release_inst)
             prev_test_release_inst = test_release_inst
     # Try to solve
     elapsed_time = 0
@@ -58,6 +57,9 @@ def gen_cyclic_schedule_model(task_set, wcet_gap, verbose=False):
     if verbose:
         print("\nModel Solution:")
         print(solution_model)
+        # print("\nOptimization space:")
+        # print(h.lower())
+        # print(h.upper())
         print("\nAsserted constraints...")
         for c in smt.assertions():
             print(c)

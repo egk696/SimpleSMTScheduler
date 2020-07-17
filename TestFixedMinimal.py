@@ -8,7 +8,7 @@ from simplesmtscheduler.utilities import parse_csv_taskset
 tasksFileName = "examples/demo_tasks.csv"
 taskSet = []
 wcet_offset = 0
-verbose = False
+verbose = True
 schedulePlotPeriods = 1
 
 # tasks_data = "Period,Execution,Deadline,Offset,Jitter,CPU ID,Fixed Start,Name,Function\n" \
@@ -16,7 +16,7 @@ schedulePlotPeriods = 1
 #              "7 ,4 ,7 ,0 ,2 ,0 ,None ,T2 ,&task_2"
 
 tasks_data = "Period,Execution,Deadline,Offset,Jitter,CPU ID,Fixed Start,Name,Function\n" \
-             "100 ,50 ,100 ,0 ,0 ,0 ,None ,T1 ,&task_1"
+             "100 ,20 ,100 ,0 ,0 ,0 ,None ,T1 ,&task_1"
 
 file = io.StringIO(tasks_data)
 csv.writer(file)

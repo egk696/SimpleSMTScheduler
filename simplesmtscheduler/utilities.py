@@ -83,8 +83,11 @@ def plot_cyclic_schedule(task_set, hyper_period, iterations):
     # Declaring a figure "gnt"
     fig, axis = plt.subplots()
 
+    # Sort
+    srt_task_set = sorted(task_set, key=lambda x: x.getStartPIT()[0], reverse=True)
+
     # Setting Y-axis limits
-    axis.set_ylim(0, len(task_set) * 10)
+    axis.set_ylim(0, len(srt_task_set) * 10)
 
     # Setting X-axis limits
     axis.set_xlim(0, hyper_period * iterations)
@@ -97,10 +100,10 @@ def plot_cyclic_schedule(task_set, hyper_period, iterations):
     axis.set_xticks(range(0, hyper_period * iterations, int(hyper_period * iterations / 10)))
 
     # Setting ticks on y-axis
-    axis.set_yticks(range(5, len(task_set) * 10 + 5, 10))
+    axis.set_yticks(range(5, len(srt_task_set) * 10 + 5, 10))
 
     # Labelling tickes of y-axis
-    axis.set_yticklabels([t.name for t in task_set])
+    axis.set_yticklabels([t.name for t in srt_task_set])
 
     # Show the major grid lines with dark grey lines
     plt.grid(b=True, which='major', color='#666666', linestyle='-')
@@ -110,17 +113,17 @@ def plot_cyclic_schedule(task_set, hyper_period, iterations):
     plt.grid(b=True, which='minor', color='#999999', linestyle='-', alpha=0.2)
 
     # Color map
-    cmap = plt.cm.get_cmap('jet', len(task_set))
+    cmap = plt.cm.get_cmap('jet', len(srt_task_set))
 
     print("Schedule plotted for %s hyper-periods\n" % iterations)
 
-    for i in range(len(task_set)):
+    for i in range(len(srt_task_set)):
         taskExecutionBars = []
         for hyper_iter in range(0, iterations):
-            for jj in range(len(task_set[i].getStartPIT())):
+            for jj in range(len(srt_task_set[i].getStartPIT())):
                 taskExecutionBars.append(
-                    (hyper_iter * hyper_period + task_set[i].getStartPIT()[jj], task_set[i].execution))
-        axis.broken_barh(taskExecutionBars, (i * 10, 10), label=task_set[i].name, linewidth=0.3, edgecolors='black',
+                    (hyper_iter * hyper_period + srt_task_set[i].getStartPIT()[jj], srt_task_set[i].execution))
+        axis.broken_barh(taskExecutionBars, (i * 10, 10), label=srt_task_set[i].name, linewidth=0.3, edgecolors='black',
                          facecolors=cmap(i))
 
     # Rotate labels to fit nicely
@@ -131,6 +134,8 @@ def plot_cyclic_schedule(task_set, hyper_period, iterations):
 
 def gen_schedule_code(file_name, tasks_file_name, task_set, hyper_period, utilization, isCli=False):
     wr_buf = StringIO()
+
+    time_ctype = "unsigned long long"
 
     wr_buf.write("#pragma once\r\n\r\n")
     wr_buf.write("/*\r\n")
@@ -144,7 +149,7 @@ def gen_schedule_code(file_name, tasks_file_name, task_set, hyper_period, utiliz
     for i in range(len(task_set)):
         wr_buf.write("#define %s_PERIOD %s\r\n" % (task_set[i].name, task_set[i].period))
     wr_buf.write("\r\n")
-    wr_buf.write("schedtime_t tasks_periods[NUM_OF_TASKS] = {")
+    wr_buf.write("unsigned long long tasks_periods[NUM_OF_TASKS] = {")
     for i in range(len(task_set)):
         if (i < len(task_set) - 1):
             wr_buf.write("%s_PERIOD, " % task_set[i].name)
@@ -164,12 +169,12 @@ def gen_schedule_code(file_name, tasks_file_name, task_set, hyper_period, utiliz
     wr_buf.write("};\r\n")
     wr_buf.write("\r\n")
     for i in range(len(task_set)):
-        wr_buf.write("schedtime_t %s_sched_insts[%s_INSTS_NUM] = %s;\r\n" % (task_set[i].name, task_set[i].name,
-                                                                             str(task_set[
-                                                                                     i].getStartPIT()).replace(
-                                                                                 "[", "{").replace("]", "}")))
+        wr_buf.write("unsigned long long %s_sched_insts[%s_INSTS_NUM] = %s;\r\n" % (task_set[i].name, task_set[i].name,
+                                                                                    str(task_set[
+                                                                                            i].getStartPIT()).replace(
+                                                                                        "[", "{").replace("]", "}")))
     wr_buf.write("\r\n")
-    wr_buf.write("schedtime_t *tasks_schedules[NUM_OF_TASKS] = {")
+    wr_buf.write("unsigned long long *tasks_schedules[NUM_OF_TASKS] = {")
     for i in range(len(task_set)):
         if (i < len(task_set) - 1):
             wr_buf.write("%s_sched_insts, " % task_set[i].name)
