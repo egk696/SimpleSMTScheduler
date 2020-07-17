@@ -3,7 +3,7 @@ from time import *
 from simplesmtscheduler.utilities import *
 
 
-def gen_cyclic_schedule_model(task_set, wcet_gap, verbose=False):
+def gen_cyclic_schedule_model(task_set, wcet_gap, optimize=False, verbose=False):
     # Find the hyper period
     hyper_period = find_lcm([o.period for o in task_set])
     utilization = sum(t.execution / t.period for t in task_set) * 100
@@ -42,7 +42,8 @@ def gen_cyclic_schedule_model(task_set, wcet_gap, verbose=False):
                             test_release_inst + test_task.execution + wcet_gap <= other_release_inst,
                             test_release_inst >= other_release_inst + other_task.execution + wcet_gap
                         ))
-            # h = smt.minimize(test_release_inst)
+            if optimize:
+                h = smt.minimize(test_release_inst)
             prev_test_release_inst = test_release_inst
     # Try to solve
     elapsed_time = 0
@@ -57,9 +58,10 @@ def gen_cyclic_schedule_model(task_set, wcet_gap, verbose=False):
     if verbose:
         print("\nModel Solution:")
         print(solution_model)
-        # print("\nOptimization space:")
-        # print(h.lower())
-        # print(h.upper())
+        if optimize:
+            print("\nOptimization space:")
+            print(h.lower())
+            print(h.upper())
         print("\nAsserted constraints...")
         for c in smt.assertions():
             print(c)
