@@ -147,6 +147,7 @@ def gen_schedule_code(file_name, tasks_file_name, task_set, hyper_period, utiliz
     wr_buf.write("#define NUM_OF_TASKS %s\r\n" % len(task_set))
     wr_buf.write("#define HYPER_PERIOD %s\r\n\r\n" % hyper_period)
     for i in range(len(task_set)):
+        wr_buf.write("#define %s_ID %s\r\n" % (task_set[i].cfunc, str(i)))
         wr_buf.write("#define %s_PERIOD %s\r\n" % (task_set[i].name, task_set[i].period))
     wr_buf.write("\r\n")
     wr_buf.write("unsigned long long tasks_periods[NUM_OF_TASKS] = {")

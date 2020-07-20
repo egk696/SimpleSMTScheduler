@@ -102,7 +102,8 @@ if __name__ == "__main__":
                 schedulePlot.savefig(scheduleFileName, dpi=MY_DPI)
 
             if code:
-                gen_schedule_code("simplesmtschedule.h", tasksFileName, taskSet, hyperPeriod, utilization, True)
+                gen_schedule_code(tasksFileName.replace(".csv", "_schedule.h"), tasksFileName, taskSet, hyperPeriod,
+                                  utilization, True)
 
             sys.exit()
         else:
