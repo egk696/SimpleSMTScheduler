@@ -7,11 +7,16 @@ def gen_cyclic_schedule_model(task_set, wcet_gap, optimize=False, verbose=False)
     # Find the hyper period
     hyper_period = find_lcm([o.period for o in task_set])
     utilization = sum(t.execution / t.period for t in task_set) * 100
-    # Define constraints
+    # Define solver
     if optimize:
         smt = Optimize()
+        smt.set('priority', 'pareto')
     else:
         smt = Solver()
+        smt.set('arith.solver', 3)
+        smt.set('arith.auto_config_simplex', True)
+    # Define constraints
+    opt_bounds = []
     for task in task_set:
         for nn in range(floor(hyper_period / task.period)):
             task.release_instances.append(Int(task.name + "_" + "inst_" + str(nn)))
@@ -25,15 +30,19 @@ def gen_cyclic_schedule_model(task_set, wcet_gap, optimize=False, verbose=False)
             smt.add(test_release_inst + test_task.execution <= hyper_period - wcet_gap)
             # If a task has a user fixed start PIT define it otherwise use offset
             if hasattr(test_task, 'fixed_pit'):
-                smt.add(test_release_inst == nn * test_task.period + test_task.fixed_pit)
+                smt.add(And(
+                    test_release_inst <= nn * test_task.period + test_task.fixed_pit + test_task.jitter,
+                    test_release_inst >= nn * test_task.period + test_task.fixed_pit - test_task.jitter
+                ))
             else:
                 smt.add(test_release_inst >= nn * test_task.period + test_task.offset)
             # Period constraint including jitter
             if prev_test_release_inst is not None:
-                smt.add(And(
-                    test_release_inst - prev_test_release_inst >= test_task.period - test_task.jitter,
-                    test_release_inst - prev_test_release_inst <= test_task.period + test_task.jitter
-                ))
+                # smt.add(And(
+                #     test_release_inst - prev_test_release_inst >= test_task.period - test_task.jitter,
+                #     test_release_inst - prev_test_release_inst <= test_task.period + test_task.jitter
+                # ))
+                smt.add(test_release_inst - prev_test_release_inst >= test_task.period)
             # Each task should finish within the deadline with jitter
             smt.add(test_task.release_instances[
                         nn] + test_task.execution <= nn * test_task.period + test_task.deadline + test_task.jitter)
@@ -46,8 +55,11 @@ def gen_cyclic_schedule_model(task_set, wcet_gap, optimize=False, verbose=False)
                             test_release_inst >= other_release_inst + other_task.execution + wcet_gap
                         ))
             if optimize:
-                h = smt.minimize(test_release_inst)
+                opt_bounds.append((test_release_inst, smt.minimize(test_release_inst)))
             prev_test_release_inst = test_release_inst
+        # if optimize:
+        #     opt_bounds.append((test_task, smt.minimize(Sum(test_task.release_instances))))
+
     # Try to solve
     elapsed_time = 0
     start_time = time()
@@ -56,18 +68,18 @@ def gen_cyclic_schedule_model(task_set, wcet_gap, optimize=False, verbose=False)
         elapsed_time = time() - start_time
     else:
         solution_model = None
-        time() - start_time
+        elapsed_time = time() - start_time
 
     if verbose:
-        print("\nModel Solution:")
-        print(solution_model)
-        if optimize:
-            print("\nOptimization space:")
-            print(h.lower())
-            print(h.upper())
         print("\nAsserted constraints...")
         for c in smt.assertions():
             print(c)
+        print("\nModel Solution:")
+        print(solution_model)
+        if optimize:
+            print("\nOptimization bounds:")
+            for o_bound in opt_bounds:
+                print(f"\t{o_bound[0]}: (lower = {o_bound[1].lower()}, upper = {o_bound[1].upper()})")
         print("\nZ3 statistics...")
         for k, v in smt.statistics():
             print("%s : %s" % (k, v))

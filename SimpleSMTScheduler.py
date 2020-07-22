@@ -7,22 +7,23 @@ from simplesmtscheduler.utilities import *
 
 taskSet = []
 tasksFileName = ""
-scheduleFileName = ""
+plotFileName = ""
 schedulePlotPeriods = 1
 plot = True
 verbose = True
 interactive = False
+optimize = False
 
 if __name__ == "__main__":
     print("Welcome to this simple SMT scheduler (SSMTS)...\n")
 
     if len(sys.argv) > 1:
         try:
-            opts, args = getopt.getopt(sys.argv[1:], "hi:o:w:n:pvc",
-                                       ["help", "itasks=", "osched=", "wcet=", "nperiods=", "plot", "verbose",
+            opts, args = getopt.getopt(sys.argv[1:], "hi:w:p:n:ovc",
+                                       ["help", "itasks=", "wcet=", "plot=", "nperiods=", "optimize", "verbose",
                                         "code"])
         except getopt.GetoptError:
-            print('Try : SimpleSMTScheduler.py -i <inputtasks> -o <outputschedule> -w 35713 -n <plotperiods> -p -v')
+            print('Try : SimpleSMTScheduler.py -i <inputtasks> -w 35713 -p <outputplot> -n <plotperiods> -v -c')
             print("Or : SimpleSMTScheduler.py --help")
             sys.exit(2)
         plot = False
@@ -33,26 +34,27 @@ if __name__ == "__main__":
         jitter = 0
         for opt, arg in opts:
             if opt in ("-h", "--help"):
-                print('SimpleSMTScheduler.py -i <inputtasks> -o <outputschedule> -w 35713 -n <plotperiods> -p -v')
+                print('SimpleSMTScheduler.py -i <inputtasks> -w 35713 -p <outputplot> -n <plotperiods> -v -c')
                 print("-h\t--help")
                 print("-i\t--itasks")
-                print("-o\t--osched")
                 print("-w\t--wcet")
-                print("-n\t--nperiods")
                 print("-p\t--plot")
+                print("-n\t--nperiods")
+                print("-o\t--optimize")
                 print("-v\t--verbose")
                 print("-c\t--code")
                 sys.exit()
             elif opt in ("-i", "--itasks"):
                 tasksFileName = arg
-            elif opt in ("-o", "--osched"):
-                scheduleFileName = arg
             elif opt in ("-w", "--wcet"):
                 wcet_offset = int(arg)
+            elif opt in ("-p", "--plot"):
+                plotFileName = arg
+                plot = True
             elif opt in ("-n", "--nperiods"):
                 schedulePlotPeriods = int(arg)
-            elif opt in ("-p", "--plot"):
-                plot = True
+            elif opt in ("-o", "--optimize"):
+                optimize = True
             elif opt in ("-v", "--verbose"):
                 verbose = True
             elif opt in ("-c", "--code"):
@@ -79,15 +81,13 @@ if __name__ == "__main__":
     elif [t for t in taskSet if t.offset > t.period]:
         sys.exit("\nTask set is not valid.\nOffset times violate period constraints")
     else:
-        schedule, utilization, hyperPeriod, elapsedTime = gen_cyclic_schedule_model(taskSet, wcet_offset, verbose)
+        schedule, utilization, hyperPeriod, elapsedTime = gen_cyclic_schedule_model(taskSet, wcet_offset, optimize,
+                                                                                    verbose)
+        print("\nSolver completed in %s ms\n" % (elapsedTime * SEC_TO_MS))
+        print("Utilization = %s %%\n" % utilization)
+        print("Schedule hyper period = %s\n" % hyperPeriod)
         if schedule is not None:
             gen_schedule_activations(schedule, taskSet)
-
-            print("\nSolver completed in %s ms\n" % (elapsedTime * SEC_TO_MS))
-
-            print("Utilization = %s %%\n" % utilization)
-
-            print("Schedule hyper period = %s\n" % hyperPeriod)
 
             print("Name\tActivation Instances\t")
             for i in range(len(taskSet)):
@@ -99,7 +99,7 @@ if __name__ == "__main__":
                 schedulePlot.show()
             elif plot:
                 schedulePlot = plot_cyclic_schedule(taskSet, hyperPeriod, schedulePlotPeriods)
-                schedulePlot.savefig(scheduleFileName, dpi=MY_DPI)
+                schedulePlot.savefig(plotFileName, dpi=MY_DPI)
 
             if code:
                 gen_schedule_code(tasksFileName.replace(".csv", "_schedule.h"), tasksFileName, taskSet, hyperPeriod,

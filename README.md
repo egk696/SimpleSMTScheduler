@@ -105,19 +105,21 @@ The available arguments are the following:
 
 `-i (--itasks)` accepts as input the path to the tasks CSV file
 
-`-j (--jitter)` accepts as input the jitter gap to be allocated between tasks
+`-w (--wcet)` accepts as input WCET gap to be allocated between tasks
   
-`-o (--osched)` accepts as input the path for the generated schedule plot
+`-p (--plot)` accepts as input the path for the generated schedule plot
 
 `-n (--nperiods)` controls the plotted number of hyper periods
 
-`-p (--plot)` enables plotting
+`-o (--optimize)` enables optimization
 
 `-v (--verbose)` enables display of generated constraints and statistics
 
+`-c (--code)` enables C header file code generation
+
 A typical example of six tasks with WCET inter-task allocation gap 50 is shown below:
 
-<pre><font color="#729FCF"><b>~/SimpleSMTScheduler</b></font>$ python3 SimpleSMTScheduler.py -i examples/simple_tasks.csv -w 50
+<pre><font color="#729FCF"><b>~/SimpleSMTScheduler</b></font>$ python3 SimpleSMTScheduler.py -w 50 -p examples/simple_tasks.csv
 
 Welcome to this simple SMT scheduler (SSMTS)...
 Importing task set from file source...
