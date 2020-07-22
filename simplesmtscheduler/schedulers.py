@@ -38,11 +38,10 @@ def gen_cyclic_schedule_model(task_set, wcet_gap, optimize=False, verbose=False)
                 smt.add(test_release_inst >= nn * test_task.period + test_task.offset)
             # Period constraint including jitter
             if prev_test_release_inst is not None:
-                # smt.add(And(
-                #     test_release_inst - prev_test_release_inst >= test_task.period - test_task.jitter,
-                #     test_release_inst - prev_test_release_inst <= test_task.period + test_task.jitter
-                # ))
-                smt.add(test_release_inst - prev_test_release_inst >= test_task.period)
+                smt.add(And(
+                    test_release_inst - prev_test_release_inst >= test_task.period - test_task.jitter,
+                    test_release_inst - prev_test_release_inst <= test_task.period + test_task.jitter
+                ))
             # Each task should finish within the deadline with jitter
             smt.add(test_task.release_instances[
                         nn] + test_task.execution <= nn * test_task.period + test_task.deadline + test_task.jitter)
