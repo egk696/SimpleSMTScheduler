@@ -84,7 +84,10 @@ def plot_cyclic_schedule(task_set, hyper_period, iterations):
     fig, axis = plt.subplots()
 
     # Sort
-    srt_task_set = sorted(task_set, key=lambda x: x.getStartPIT()[0], reverse=True)
+    try:
+        srt_task_set = sorted(task_set, key=lambda x: x.getStartPIT()[0], reverse=True)
+    except:
+        srt_task_set = task_set.copy()
 
     # Setting Y-axis limits
     axis.set_ylim(0, len(srt_task_set) * 10)
