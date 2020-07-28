@@ -40,3 +40,6 @@ class PeriodicTask:
 
     def getStartPIT(self):
         return self.activation_instances
+
+    def toActualDict(self):
+        return {k: v for k, v in self.__dict__ if not k.contains('release_instances')}
