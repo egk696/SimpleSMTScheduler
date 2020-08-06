@@ -27,5 +27,5 @@ schedule, utilization, hyperPeriod, elapsedTime = gen_cyclic_schedule_model(task
 print("Hyperperiod = " + str(hyperPeriod))
 if schedule is not None:
     gen_schedule_activations(schedule, taskSet)
-schedulePlot = plot_cyclic_schedule(taskSet, hyperPeriod, schedulePlotPeriods)
+schedulePlot = plot_cyclic_schedule('Fixed Demo', taskSet, hyperPeriod, schedulePlotPeriods)
 schedulePlot.show()

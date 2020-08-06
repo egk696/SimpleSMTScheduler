@@ -73,6 +73,9 @@ if __name__ == "__main__":
 
     print("Importing task set from file source...\n")
     parse_csv_taskset(tasksFileName, taskSet)
+    baseFileName = os.path.basename(tasksFileName)
+
+    taskSet.sort(key=lambda x: x.coreid, reverse=True)
 
     if [t for t in taskSet if t.execution > t.deadline]:
         sys.exit("\nTask set is not valid.\nExecution time violate period and deadline constraints")
@@ -81,30 +84,45 @@ if __name__ == "__main__":
     elif [t for t in taskSet if t.offset > t.period]:
         sys.exit("\nTask set is not valid.\nOffset times violate period constraints")
     else:
-        schedule, utilization, hyperPeriod, elapsedTime = gen_cyclic_schedule_model(taskSet, wcet_offset, optimize,
-                                                                                    verbose)
-        print("\nSolver completed in %s ms\n" % (elapsedTime * SEC_TO_MS))
-        print("Utilization = %s %%\n" % utilization)
-        print("Schedule hyper period = %s\n" % hyperPeriod)
-        if schedule is not None:
-            gen_schedule_activations(schedule, taskSet)
+        nr_cores = max([t.coreid for t in taskSet])
+        for core_id in range(1, nr_cores + 1):
+            core_tasks = [t for t in taskSet if t.coreid == core_id]
+            hyper_period = find_lcm([t.period for t in core_tasks])
+            utilization = sum(t.execution / t.period for t in core_tasks) * 100
+            print(f"\nScheduling CPU ID {str(core_id)} started...")
+            print("\tUtilization = %s %%" % str(utilization))
+            print("\tSchedule hyper period = %s" % str(hyper_period))
+            print("\tUsing optimization is", str(optimize))
+            print("\tAllocated WCET RTS=", str(wcet_offset))
 
-            print("Name\tActivation Instances\t")
-            for i in range(len(taskSet)):
-                print("schedtime_t %s_sched_insts[%s] = %s;" % (taskSet[i].name, len(taskSet[i].getStartPIT()),
-                                                                str(taskSet[i].getStartPIT()).replace("[", "{").replace(
-                                                                    "]", "}")))
-            if interactive:
-                schedulePlot = plot_cyclic_schedule(taskSet, hyperPeriod, schedulePlotPeriods)
-                schedulePlot.show()
-            elif plot:
-                schedulePlot = plot_cyclic_schedule(taskSet, hyperPeriod, schedulePlotPeriods)
-                schedulePlot.savefig(plotFileName, dpi=MY_DPI)
+            schedule, utilization, hyperPeriod, elapsedTime = gen_cyclic_schedule_model(core_tasks, wcet_offset,
+                                                                                        optimize,
+                                                                                        verbose)
+            print("\n\tSolver completed in %s ms" % (elapsedTime * SEC_TO_MS))
+            if schedule is not None:
+                gen_schedule_activations(schedule, core_tasks)
 
-            if code:
-                gen_schedule_code(tasksFileName.replace(".csv", "_schedule.h"), tasksFileName, taskSet, hyperPeriod,
-                                  utilization, True)
+                print("\tName\tActivation Instances\t")
+                for i in range(len(core_tasks)):
+                    print("\tschedtime_t %s_sched_insts[%s] = %s;" % (
+                    core_tasks[i].name, len(core_tasks[i].getStartPIT()),
+                    str(core_tasks[i].getStartPIT()).replace("[", "{").replace(
+                        "]", "}")))
+            else:
+                print(f"\tA schedule for CPU ID {core_id} could not be generated")
 
+        if interactive:
+            schedulePlot = plot_cyclic_schedule(os.path.splitext(baseFileName)[0], taskSet, hyperPeriod,
+                                                schedulePlotPeriods)
+            schedulePlot.show()
+        elif plot:
+            schedulePlot = plot_cyclic_schedule(os.path.splitext(baseFileName)[0], taskSet, hyperPeriod,
+                                                schedulePlotPeriods)
+            schedulePlot.savefig(plotFileName, dpi=MY_DPI)
+            schedulePlot.show()
+
+        if code:
+            gen_schedule_code(os.path.splitext(baseFileName).replace(".csv", "_schedule.h"), tasksFileName, taskSet,
+                              hyperPeriod,
+                              utilization, True)
             sys.exit()
-        else:
-            sys.exit("\nA schedule could not be generated")

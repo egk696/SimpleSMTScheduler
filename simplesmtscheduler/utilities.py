@@ -8,6 +8,8 @@ from z3 import *
 
 from simplesmtscheduler.taskdefs import *
 
+# set_param('parallel.enable', True)
+
 MY_DPI = 480
 SEC_TO_MS = 1000
 US_TO_MS = 0.001
@@ -79,55 +81,48 @@ def parse_csv_taskset(csv_file, task_set):
     f.close()
 
 
-def plot_cyclic_schedule(task_set, hyper_period, iterations):
+def plot_cyclic_schedule(name, task_set, hyper_period, iterations):
     # Declaring a figure "gnt"
     fig, axis = plt.subplots()
 
     # Sort
     try:
-        srt_task_set = sorted(task_set, key=lambda x: x.getStartPIT()[0], reverse=True)
+        srt_task_set = sorted(task_set, key=lambda x: x.coreid, reverse=True)
     except:
         srt_task_set = task_set.copy()
 
+    plt.title(name)
+
     # Setting Y-axis limits
     axis.set_ylim(0, len(srt_task_set) * 10)
-
     # Setting X-axis limits
     axis.set_xlim(0, hyper_period * iterations)
-
     # Setting labels for x-axis and y-axis
     axis.set_xlabel('Schedule Timeline')
     axis.set_ylabel('Tasks')
-
     # axis.set_xticks(range(0, periods*Sum([t.getStartPIT()+t.execution for t in taskSet]), 5000))
     axis.set_xticks(range(0, hyper_period * iterations, int(hyper_period * iterations / 10)))
-
     # Setting ticks on y-axis
     axis.set_yticks(range(5, len(srt_task_set) * 10 + 5, 10))
-
     # Labelling tickes of y-axis
-    axis.set_yticklabels([t.name for t in srt_task_set])
-
+    axis.set_yticklabels([(t.coreid, t.name) for t in srt_task_set])
     # Show the major grid lines with dark grey lines
     plt.grid(b=True, which='major', color='#666666', linestyle='-')
-
     # Show the minor grid lines with very faint and almost transparent grey lines
     plt.minorticks_on()
     plt.grid(b=True, which='minor', color='#999999', linestyle='-', alpha=0.2)
-
     # Color map
     cmap = plt.cm.get_cmap('jet', len(srt_task_set))
-
-    print("Schedule plotted for %s hyper-periods\n" % iterations)
-
+    print("\nSchedule plotted for %s hyper-periods\n" % iterations)
     for i in range(len(srt_task_set)):
         taskExecutionBars = []
         for hyper_iter in range(0, iterations):
             for jj in range(len(srt_task_set[i].getStartPIT())):
-                taskExecutionBars.append(
-                    (hyper_iter * hyper_period + srt_task_set[i].getStartPIT()[jj], srt_task_set[i].execution))
-        axis.broken_barh(taskExecutionBars, (i * 10, 10), label=srt_task_set[i].name, linewidth=0.3, edgecolors='black',
-                         facecolors=cmap(i))
+                start = hyper_iter * hyper_period + srt_task_set[i].getStartPIT()[jj]
+                end = srt_task_set[i].execution
+                taskExecutionBars.append((start, end))
+        task_label = f"CPU#{srt_task_set[i].coreid}_{srt_task_set[i].name}"
+        axis.broken_barh(taskExecutionBars, (i * 10, 10), label=task_label, facecolors=cmap(i))
 
     # Rotate labels to fit nicely
     fig.autofmt_xdate()

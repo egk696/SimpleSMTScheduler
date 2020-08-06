@@ -22,12 +22,13 @@ class PeriodicTask:
         if fixed_pit is not None:
             self.fixed_pit = fixed_pit
 
-        print("Task_" + name + " {")
+        print(name + " {")
         print("  T=%s," % period)
         print("  C=%s," % execution)
         print("  D=%s," % deadline)
         print("  O=%s," % offset)
         print("  J=%s," % jitter)
+        print("  CPU=%s," % coreid)
         if fixed_pit is not None:
             print("  S=%s μs" % fixed_pit)
         print("};")
