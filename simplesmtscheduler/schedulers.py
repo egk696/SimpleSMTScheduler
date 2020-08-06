@@ -4,8 +4,8 @@ from simplesmtscheduler.utilities import *
 
 
 def gen_cyclic_schedule_model(task_set, wcet_gap, optimize=False, verbose=False):
-    # Sort by EDF
-    task_set.sort(key=lambda x: x.deadline, reverse=False)
+    # # Sort by EDF
+    # task_set.sort(key=lambda x: x.deadline, reverse=False)
     # Find the hyper period
     hyper_period = find_lcm([o.period for o in task_set])
     utilization = sum(t.execution / t.period for t in task_set) * 100
@@ -40,16 +40,15 @@ def gen_cyclic_schedule_model(task_set, wcet_gap, optimize=False, verbose=False)
                 smt.add(test_release_inst >= nn * task.period + task.offset)
             # Period constraint including jitter
             if prev_test_release_inst is not None:
-                if task.jitter > 0:
-                    smt.add(And(
-                        test_release_inst - prev_test_release_inst >= task.period - task.jitter,
-                        test_release_inst - prev_test_release_inst <= task.period + task.jitter
-                    ))
-                else:
-                    smt.add(test_release_inst - prev_test_release_inst == task.period)
+                smt.add(And(
+                    test_release_inst - prev_test_release_inst >= task.period - task.jitter,
+                    test_release_inst - prev_test_release_inst <= task.period + task.jitter
+                ))
+                if optimize:
+                    opt_bounds.append(
+                        (test_release_inst, smt.minimize(test_release_inst - prev_test_release_inst - task.period)))
             # Each task should finish within the deadline with jitter
-            smt.add(task.release_instances[
-                        nn] + task.execution <= nn * task.period + task.deadline + task.jitter)
+            smt.add(test_release_inst + task.execution + wcet_gap <= nn * task.period + task.deadline + task.jitter)
             # The start PIT should not fall within the execution of another task including a BAG
             for other_task in [o for o in task_set if o.name != task.name and o.coreid == task.coreid]:
                 for other_release_inst in other_task.release_instances:
@@ -57,8 +56,6 @@ def gen_cyclic_schedule_model(task_set, wcet_gap, optimize=False, verbose=False)
                         test_release_inst + task.execution + wcet_gap <= other_release_inst,
                         test_release_inst >= other_release_inst + other_task.execution + wcet_gap
                     ))
-            if optimize:
-                opt_bounds.append((test_release_inst, smt.minimize(test_release_inst)))
             prev_test_release_inst = test_release_inst
         # if optimize:
         #     opt_bounds.append((test_task, smt.minimize(Sum(test_task.release_instances))))

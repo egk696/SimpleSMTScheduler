@@ -1,6 +1,7 @@
 #!/usr/bin/python
 
 import getopt
+from statistics import stdev
 
 from simplesmtscheduler.schedulers import *
 from simplesmtscheduler.utilities import *
@@ -47,7 +48,7 @@ if __name__ == "__main__":
             elif opt in ("-i", "--itasks"):
                 tasksFileName = arg
             elif opt in ("-w", "--wcet"):
-                wcet_offset = int(arg)
+                wcet_offset = float(arg)
             elif opt in ("-p", "--plot"):
                 plotFileName = arg
                 plot = True
@@ -75,8 +76,6 @@ if __name__ == "__main__":
     parse_csv_taskset(tasksFileName, taskSet)
     baseFileName = os.path.basename(tasksFileName)
 
-    taskSet.sort(key=lambda x: x.coreid, reverse=True)
-
     if [t for t in taskSet if t.execution > t.deadline]:
         sys.exit("\nTask set is not valid.\nExecution time violate period and deadline constraints")
     elif [t for t in taskSet if t.deadline > t.period]:
@@ -84,30 +83,39 @@ if __name__ == "__main__":
     elif [t for t in taskSet if t.offset > t.period]:
         sys.exit("\nTask set is not valid.\nOffset times violate period constraints")
     else:
-        nr_cores = max([t.coreid for t in taskSet])
-        for core_id in range(1, nr_cores + 1):
+        nr_cores = [t.coreid for t in taskSet]
+        for core_id in range(min(nr_cores), max(nr_cores) + 1):
             core_tasks = [t for t in taskSet if t.coreid == core_id]
             hyper_period = find_lcm([t.period for t in core_tasks])
             utilization = sum(t.execution / t.period for t in core_tasks) * 100
             print(f"\nScheduling CPU ID {str(core_id)} started...")
-            print("\tUtilization = %s %%" % str(utilization))
-            print("\tSchedule hyper period = %s" % str(hyper_period))
-            print("\tUsing optimization is", str(optimize))
-            print("\tAllocated WCET RTS=", str(wcet_offset))
+            print("\t- Utilization = %s %%" % str(utilization))
+            print("\t- Schedule hyper period = %s" % str(hyper_period))
+            print("\t- Using optimization is", str(optimize))
+            print("\t- Allocated WCET RTS =", str(wcet_offset))
 
             schedule, utilization, hyperPeriod, elapsedTime = gen_cyclic_schedule_model(core_tasks, wcet_offset,
                                                                                         optimize,
                                                                                         verbose)
-            print("\n\tSolver completed in %s ms" % (elapsedTime * SEC_TO_MS))
+            print("\n\t- Solver completed in %s ms" % (elapsedTime * SEC_TO_MS))
             if schedule is not None:
                 gen_schedule_activations(schedule, core_tasks)
 
-                print("\tName\tActivation Instances\t")
+                print("\t- Activation Instances:")
                 for i in range(len(core_tasks)):
-                    print("\tschedtime_t %s_sched_insts[%s] = %s;" % (
-                    core_tasks[i].name, len(core_tasks[i].getStartPIT()),
-                    str(core_tasks[i].getStartPIT()).replace("[", "{").replace(
-                        "]", "}")))
+                    print("\t\tschedtime_t %s_sched_insts[%s] = %s;" % (
+                        core_tasks[i].name, len(core_tasks[i].getStartPIT()),
+                        str(core_tasks[i].getStartPIT()).replace("[", "{").replace(
+                            "]", "}")))
+
+                print("\t- Estimated release jitter per task:")
+                tasks_jitter = calc_jitter_pertask(core_tasks)
+                for t in core_tasks:
+                    print(f"\t\t{t.name}", end='')
+                    if len(tasks_jitter[t.name]) > 1:
+                        print(f"(std.dev = {round(stdev(tasks_jitter[t.name]), 2)}, "
+                              f"max = {max(tasks_jitter[t.name])}, min = {min(tasks_jitter[t.name])}):", end='')
+                    print("\n\t\t\t" + str(tasks_jitter[t.name]))
             else:
                 print(f"\tA schedule for CPU ID {core_id} could not be generated")
 
@@ -119,10 +127,9 @@ if __name__ == "__main__":
             schedulePlot = plot_cyclic_schedule(os.path.splitext(baseFileName)[0], taskSet, hyperPeriod,
                                                 schedulePlotPeriods)
             schedulePlot.savefig(plotFileName, dpi=MY_DPI)
-            schedulePlot.show()
 
         if code:
-            gen_schedule_code(os.path.splitext(baseFileName).replace(".csv", "_schedule.h"), tasksFileName, taskSet,
+            gen_schedule_code(tasksFileName.replace(".csv", "_schedule.h"), tasksFileName, taskSet,
                               hyperPeriod,
                               utilization, True)
             sys.exit()

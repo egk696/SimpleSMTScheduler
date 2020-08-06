@@ -84,10 +84,11 @@ def parse_csv_taskset(csv_file, task_set):
 def plot_cyclic_schedule(name, task_set, hyper_period, iterations):
     # Declaring a figure "gnt"
     fig, axis = plt.subplots()
+    plt.subplots_adjust(left=0.05, bottom=0.10, right=0.97, top=0.96)
 
     # Sort
     try:
-        srt_task_set = sorted(task_set, key=lambda x: x.coreid, reverse=True)
+        srt_task_set = sorted(task_set, key=lambda x: (x.coreid, x.getStartPIT()[0]), reverse=True)
     except:
         srt_task_set = task_set.copy()
 
@@ -188,3 +189,17 @@ def gen_schedule_code(file_name, tasks_file_name, task_set, hyper_period, utiliz
         return 1
     else:
         return wr_buf
+
+
+def calc_jitter_pertask(tasks):
+    tasks_jitter = dict()
+    for t in tasks:
+        release_jitter = []
+        prev_release_inst = None
+        for nn in range(len(t.getStartPIT())):
+            release_inst = t.getStartPIT()[nn]
+            if prev_release_inst is not None:
+                release_jitter.append(release_inst - prev_release_inst - t.period)
+            prev_release_inst = release_inst
+        tasks_jitter[t.name] = release_jitter
+    return tasks_jitter
