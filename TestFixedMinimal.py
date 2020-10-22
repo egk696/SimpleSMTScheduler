@@ -5,13 +5,13 @@ from simplesmtscheduler.schedulers import gen_cyclic_schedule_model, gen_schedul
     gen_rate_monotonic_schedule
 from simplesmtscheduler.utilities import parse_csv_taskset, calc_jitter_pertask
 
-tasksFileName = "examples/task_set_rms.csv"
+tasksFileName = "examples/simple_tasks.csv"
 taskSet = []
 wcet_offset = 0
 verbose = False
 optimize = False
 schedulePlotPeriods = 1
-rate_monotonic_mode = True
+rate_monotonic_mode = False
 schedule = None
 
 # tasks_data = "Period,Execution,Deadline,Offset,Jitter,CPU ID,Fixed Start,Name,Function\n" \
@@ -44,7 +44,7 @@ print("Hyperperiod = " + str(hyperPeriod))
 
 if schedule is not None or rate_monotonic_mode:
     gen_schedule_activations(schedule, taskSet)
-    schedulePlot = plot_cyclic_schedule('Fixed Demo', taskSet, hyperPeriod, schedulePlotPeriods)
+    schedulePlot = plot_cyclic_schedule(taskSet, hyperPeriod, schedulePlotPeriods, 'Fixed Demo')
     schedulePlot.show()
     print("\nEstimated release jitter per task:")
     tasks_jitter = calc_jitter_pertask(taskSet)

@@ -81,7 +81,7 @@ def parse_csv_taskset(csv_file, task_set):
     f.close()
 
 
-def plot_cyclic_schedule(name, task_set, hyper_period, iterations):
+def plot_cyclic_schedule(task_set, hyper_period, iterations=1, name=None):
     # Declaring a figure "gnt"
     fig, axis = plt.subplots()
     plt.subplots_adjust(left=0.05, bottom=0.10, right=0.97, top=0.96)
@@ -92,7 +92,8 @@ def plot_cyclic_schedule(name, task_set, hyper_period, iterations):
     except:
         srt_task_set = task_set.copy()
 
-    plt.title(name)
+    if name is not None:
+        plt.title(name)
 
     # Setting Y-axis limits
     axis.set_ylim(0, len(srt_task_set) * 10)
