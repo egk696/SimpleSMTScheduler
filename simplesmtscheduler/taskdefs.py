@@ -17,6 +17,7 @@ class PeriodicTask:
         self.release_instances = []  # constraint
         self.releas_itr = None
         self.cfunc = cfunc
+        self.active_itr = None
         self.activation_instances = []  # result
 
         if fixed_pit is not None:

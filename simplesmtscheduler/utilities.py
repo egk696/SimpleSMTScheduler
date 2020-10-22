@@ -113,7 +113,7 @@ def plot_cyclic_schedule(name, task_set, hyper_period, iterations):
     plt.minorticks_on()
     plt.grid(b=True, which='minor', color='#999999', linestyle='-', alpha=0.2)
     # Color map
-    cmap = plt.cm.get_cmap('jet', len(srt_task_set))
+    cmap = plt.cm.get_cmap('viridis', len(srt_task_set))
     print("\nSchedule plotted for %s hyper-periods\n" % iterations)
     for i in range(len(srt_task_set)):
         taskExecutionBars = []
@@ -123,7 +123,8 @@ def plot_cyclic_schedule(name, task_set, hyper_period, iterations):
                 end = srt_task_set[i].execution
                 taskExecutionBars.append((start, end))
         task_label = f"CPU#{srt_task_set[i].coreid}_{srt_task_set[i].name}"
-        axis.broken_barh(taskExecutionBars, (i * 10, 10), label=task_label, facecolors=cmap(i))
+        axis.broken_barh(taskExecutionBars, (i * 10, 10), label=task_label, facecolors=cmap(i), edgecolor='k',
+                         linestyle='dotted', linewidth=0.2)
 
     # Rotate labels to fit nicely
     fig.autofmt_xdate()
@@ -136,6 +137,9 @@ def gen_schedule_code(file_name, tasks_file_name, task_set, hyper_period, utiliz
 
     time_ctype = "unsigned long long"
 
+    srt_task_set = sorted(task_set, key=lambda x: (x.period), reverse=False)
+    # srt_task_set = task_set.copy()
+
     wr_buf.write("#pragma once\r\n\r\n")
     wr_buf.write("/*\r\n")
     wr_buf.write(
@@ -143,43 +147,57 @@ def gen_schedule_code(file_name, tasks_file_name, task_set, hyper_period, utiliz
     wr_buf.write(" * Generated schedule based on task set defined in %s\r\n" % tasks_file_name)
     wr_buf.write(" * Scheduled Task Set Utilization = %s %%\r\n" % utilization)
     wr_buf.write(" */\r\n\r\n")
-    wr_buf.write("#define NUM_OF_TASKS %s\r\n" % len(task_set))
+    wr_buf.write("#define NUM_OF_TASKS %s\r\n" % len(srt_task_set))
     wr_buf.write("#define HYPER_PERIOD %s\r\n\r\n" % hyper_period)
-    for i in range(len(task_set)):
-        wr_buf.write("#define %s_ID %s\r\n" % (task_set[i].cfunc, str(i)))
-        wr_buf.write("#define %s_PERIOD %s\r\n" % (task_set[i].name, task_set[i].period))
+
+    for i in range(len(srt_task_set)):
+        wr_buf.write("#define %s_ID %s\r\n" % (srt_task_set[i].name, str(i)))
+        wr_buf.write("#define %s_PERIOD %s\r\n" % (srt_task_set[i].name, srt_task_set[i].period))
     wr_buf.write("\r\n")
+
+    wr_buf.write("char* tasks_names[NUM_OF_TASKS] = {")
+    for i in range(len(srt_task_set)):
+        if (i < len(srt_task_set) - 1):
+            wr_buf.write("\"%s\", " % srt_task_set[i].name)
+        else:
+            wr_buf.write("\"%s\"" % srt_task_set[i].name)
+    wr_buf.write("};\r\n")
+    wr_buf.write("\r\n")
+
     wr_buf.write("unsigned long long tasks_periods[NUM_OF_TASKS] = {")
-    for i in range(len(task_set)):
-        if (i < len(task_set) - 1):
-            wr_buf.write("%s_PERIOD, " % task_set[i].name)
+    for i in range(len(srt_task_set)):
+        if (i < len(srt_task_set) - 1):
+            wr_buf.write("%s_PERIOD, " % srt_task_set[i].name)
         else:
-            wr_buf.write("%s_PERIOD" % task_set[i].name)
+            wr_buf.write("%s_PERIOD" % srt_task_set[i].name)
     wr_buf.write("};\r\n")
     wr_buf.write("\r\n")
-    for i in range(len(task_set)):
-        wr_buf.write("#define %s_INSTS_NUM %s\r\n" % (task_set[i].name, len(task_set[i].getStartPIT())))
+    for i in range(len(srt_task_set)):
+        wr_buf.write("#define %s_INSTS_NUM %s\r\n" % (srt_task_set[i].name, len(srt_task_set[i].getStartPIT())))
     wr_buf.write("\r\n")
+
     wr_buf.write("unsigned tasks_insts_counts[NUM_OF_TASKS] = {")
-    for i in range(len(task_set)):
-        if (i < len(task_set) - 1):
-            wr_buf.write("%s_INSTS_NUM, " % task_set[i].name)
+    for i in range(len(srt_task_set)):
+        if (i < len(srt_task_set) - 1):
+            wr_buf.write("%s_INSTS_NUM, " % srt_task_set[i].name)
         else:
-            wr_buf.write("%s_INSTS_NUM" % task_set[i].name)
+            wr_buf.write("%s_INSTS_NUM" % srt_task_set[i].name)
     wr_buf.write("};\r\n")
     wr_buf.write("\r\n")
-    for i in range(len(task_set)):
-        wr_buf.write("unsigned long long %s_sched_insts[%s_INSTS_NUM] = %s;\r\n" % (task_set[i].name, task_set[i].name,
-                                                                                    str(task_set[
-                                                                                            i].getStartPIT()).replace(
-                                                                                        "[", "{").replace("]", "}")))
+    for i in range(len(srt_task_set)):
+        wr_buf.write(
+            "unsigned long long %s_sched_insts[%s_INSTS_NUM] = %s;\r\n" % (srt_task_set[i].name, srt_task_set[i].name,
+                                                                           str(srt_task_set[
+                                                                                   i].getStartPIT()).replace(
+                                                                               "[", "{").replace("]", "}")))
     wr_buf.write("\r\n")
+
     wr_buf.write("unsigned long long *tasks_schedules[NUM_OF_TASKS] = {")
-    for i in range(len(task_set)):
-        if (i < len(task_set) - 1):
-            wr_buf.write("%s_sched_insts, " % task_set[i].name)
+    for i in range(len(srt_task_set)):
+        if (i < len(srt_task_set) - 1):
+            wr_buf.write("%s_sched_insts, " % srt_task_set[i].name)
         else:
-            wr_buf.write("%s_sched_insts" % task_set[i].name)
+            wr_buf.write("%s_sched_insts" % srt_task_set[i].name)
     wr_buf.write("};\r\n")
 
     if isCli:
