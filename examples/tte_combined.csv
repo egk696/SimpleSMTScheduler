@@ -1,11 +1,11 @@
 Period  ,Execution,Deadline,Offset ,Jitter,CPU ID,Fixed Start,Name   ,Function
-10000000,67175    ,10000000,0      ,0     ,1     ,None       ,SSYN   ,&task_ssyn
+10000000,67175    ,10000000,0      ,0     ,1     ,0       ,SSYN   ,&task_ssyn
 5000000 ,153413   ,800000  ,0      ,0     ,1     ,None       ,SSENSE ,&task_ssense
 5000000 ,28300    ,5000000 ,0      ,0     ,1     ,800000     ,SSEND  ,&task_ssend
-10000000,75063    ,10000000,0      ,0     ,2     ,None       ,CSYN   ,&task_csyn
+10000000,75063    ,10000000,0      ,0     ,2     ,0       ,CSYN   ,&task_csyn
 5000000 ,271062   ,5000000 ,0      ,0     ,2     ,1200000    ,CRECV  ,&task_crecv
 5000000 ,485050   ,3600000 ,1200000,0     ,2     ,None       ,CCALC  ,&task_ccalc
 5000000 ,28300    ,5000000 ,0      ,0     ,2     ,3600000    ,CSEND  ,&task_csend
-10000000,67175    ,10000000,0      ,0     ,3     ,None       ,ASYN   ,&task_asyn
+10000000,67175    ,10000000,0      ,0     ,3     ,0       ,ASYN   ,&task_asyn
 5000000 ,271062   ,5000000 ,0      ,0     ,3     ,4000000    ,ARECV  ,&task_arecv
 20000000,2070937  ,9000000 ,4000000,0     ,3     ,None       ,APULSE ,&task_apulse

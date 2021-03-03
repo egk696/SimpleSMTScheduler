@@ -124,8 +124,8 @@ if __name__ == "__main__":
                                                 schedulePlotPeriods)
             schedulePlot.show()
         elif plot:
-            schedulePlot = plot_cyclic_schedule(os.path.splitext(baseFileName)[0], taskSet, hyperPeriod,
-                                                schedulePlotPeriods)
+            schedulePlot = plot_cyclic_schedule(taskSet, hyperPeriod,
+                                                schedulePlotPeriods, os.path.splitext(baseFileName)[0])
             schedulePlot.savefig(plotFileName, dpi=MY_DPI)
 
         if code:
