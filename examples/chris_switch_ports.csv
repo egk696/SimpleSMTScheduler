@@ -1,0 +1,5 @@
+Period,Execution,Deadline,Offset,Jitter,CPU ID,Fixed Start,Name,Function
+5000000,500000,5000000,0,0,0,None,PORT0,read_port0
+5000000,500000,5000000,0,0,0,None,PORT1,read_port1
+5000000,500000,5000000,0,0,0,None,PORT2,read_port2
+5000000,500000,5000000,0,0,0,None,PORT3,read_port3

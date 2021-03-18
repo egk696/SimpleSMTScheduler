@@ -14,15 +14,16 @@ plot = True
 verbose = True
 interactive = False
 optimize = False
+split = False
 
 if __name__ == "__main__":
     print("Welcome to this simple SMT scheduler (SSMTS)...\n")
 
     if len(sys.argv) > 1:
         try:
-            opts, args = getopt.getopt(sys.argv[1:], "hi:w:p:n:ovc",
+            opts, args = getopt.getopt(sys.argv[1:], "hi:w:p:n:ovcs",
                                        ["help", "itasks=", "wcet=", "plot=", "nperiods=", "optimize", "verbose",
-                                        "code"])
+                                        "code", "split"])
         except getopt.GetoptError:
             print('Try : SimpleSMTScheduler.py -i <inputtasks> -w 35713 -p <outputplot> -n <plotperiods> -v -c')
             print("Or : SimpleSMTScheduler.py --help")
@@ -35,7 +36,7 @@ if __name__ == "__main__":
         jitter = 0
         for opt, arg in opts:
             if opt in ("-h", "--help"):
-                print('SimpleSMTScheduler.py -i <inputtasks> -w 35713 -p <outputplot> -n <plotperiods> -v -c')
+                print('SimpleSMTScheduler.py -i <inputtasks> -w 35713 -p <outputplot> -n <plotperiods> -o -v -c -s')
                 print("-h\t--help")
                 print("-i\t--itasks")
                 print("-w\t--wcet")
@@ -44,6 +45,7 @@ if __name__ == "__main__":
                 print("-o\t--optimize")
                 print("-v\t--verbose")
                 print("-c\t--code")
+                print("-s\t--split")
                 sys.exit()
             elif opt in ("-i", "--itasks"):
                 tasksFileName = arg
@@ -60,9 +62,12 @@ if __name__ == "__main__":
                 verbose = True
             elif opt in ("-c", "--code"):
                 code = True
+            elif opt in ("-s", "--split"):
+                split = True
     else:
         code = False
         interactive = True
+        split = False
         wcet_offset = 0
         jitter = 0
 
@@ -124,9 +129,18 @@ if __name__ == "__main__":
                                                 schedulePlotPeriods)
             schedulePlot.show()
         elif plot:
-            schedulePlot = plot_cyclic_schedule(taskSet, hyperPeriod,
-                                                schedulePlotPeriods, os.path.splitext(baseFileName)[0])
-            schedulePlot.savefig(plotFileName, dpi=MY_DPI)
+            if split:
+                numberOfCores = max(t.coreid for t in taskSet) + 1
+                for i in range(numberOfCores):
+                    coreIdTasks = ([t for t in taskSet if t.coreid == i])
+                    coreHyperperiod = find_lcm([o.period for o in coreIdTasks])
+                    plot_cyclic_schedule(coreIdTasks, coreHyperperiod,
+                                         schedulePlotPeriods, os.path.splitext(baseFileName)[0]).savefig(
+                        plotFileName.replace(".png", "_" + str(i) + ".png"), dpi=MY_DPI)
+            else:
+                schedulePlot = plot_cyclic_schedule(taskSet, hyperPeriod,
+                                                    schedulePlotPeriods, os.path.splitext(baseFileName)[0])
+                schedulePlot.savefig(plotFileName, dpi=MY_DPI)
 
         if code:
             gen_schedule_code(tasksFileName.replace(".csv", "_schedule.h"), tasksFileName, taskSet,

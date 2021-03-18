@@ -14,6 +14,7 @@ class PeriodicTask:
         self.offset = ceil(offset)
         self.jitter = ceil(jitter)
         self.coreid = coreid
+        self.mapped_coreid = None
         self.release_instances = []  # constraint
         self.releas_itr = None
         self.cfunc = cfunc

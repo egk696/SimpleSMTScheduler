@@ -90,7 +90,7 @@ def plot_cyclic_schedule(task_set, hyper_period, iterations=1, name=None):
     try:
         srt_task_set = sorted(task_set, key=lambda x: (x.coreid, x.getStartPIT()[0]), reverse=True)
     except:
-        srt_task_set = task_set.copy()
+        srt_task_set = task_set
 
     if name is not None:
         plt.title(name)
@@ -141,20 +141,21 @@ def gen_schedule_code(file_name, tasks_file_name, task_set, hyper_period, utiliz
     srt_task_set = sorted(task_set, key=lambda x: (x.period), reverse=False)
     # srt_task_set = task_set.copy()
 
-    wr_buf.write("#pragma once\r\n\r\n")
-    wr_buf.write("/*\r\n")
+    wr_buf.write("#pragma once\n\n")
+    wr_buf.write("/*\n")
     wr_buf.write(
-        " * This file was generated using SimpleSMTScheduler (https://github.com/egk696/SimpleSMTScheduler)\r\n")
-    wr_buf.write(" * Generated schedule based on task set defined in %s\r\n" % tasks_file_name)
-    wr_buf.write(" * Scheduled Task Set Utilization = %s %%\r\n" % utilization)
-    wr_buf.write(" */\r\n\r\n")
-    wr_buf.write("#define NUM_OF_TASKS %s\r\n" % len(srt_task_set))
-    wr_buf.write("#define HYPER_PERIOD %s\r\n\r\n" % hyper_period)
+        " * This file was generated using SimpleSMTScheduler (https://github.com/egk696/SimpleSMTScheduler)\n")
+    wr_buf.write(" * Generated schedule based on task set defined in %s\n" % tasks_file_name)
+    wr_buf.write(" * Scheduled Task Set Utilization = %s %%\n" % utilization)
+    wr_buf.write(" */\n\n")
+    wr_buf.write("#define NUM_OF_TASKS %s\n" % len(srt_task_set))
+    wr_buf.write("#define HYPER_PERIOD %s\n\n" % hyper_period)
+    wr_buf.write("#define MAPPED_CORE_COUNT %s\n\n" % max([t.coreid + 1 for t in srt_task_set]))
 
     for i in range(len(srt_task_set)):
-        wr_buf.write("#define %s_ID %s\r\n" % (srt_task_set[i].name, str(i)))
-        wr_buf.write("#define %s_PERIOD %s\r\n" % (srt_task_set[i].name, srt_task_set[i].period))
-    wr_buf.write("\r\n")
+        wr_buf.write("#define %s_ID %s\n" % (srt_task_set[i].name, str(i)))
+        wr_buf.write("#define %s_PERIOD %s\n" % (srt_task_set[i].name, srt_task_set[i].period))
+    wr_buf.write("\n")
 
     wr_buf.write("char* tasks_names[NUM_OF_TASKS] = {")
     for i in range(len(srt_task_set)):
@@ -162,8 +163,35 @@ def gen_schedule_code(file_name, tasks_file_name, task_set, hyper_period, utiliz
             wr_buf.write("\"%s\", " % srt_task_set[i].name)
         else:
             wr_buf.write("\"%s\"" % srt_task_set[i].name)
-    wr_buf.write("};\r\n")
-    wr_buf.write("\r\n")
+    wr_buf.write("};\n")
+    wr_buf.write("\n")
+
+    wr_buf.write("unsigned tasks_per_cores[MAPPED_CORE_COUNT] = {")
+    for i in range(max([t.coreid + 1 for t in srt_task_set])):
+        if i < max([t.coreid + 1 for t in srt_task_set]) - 1:
+            wr_buf.write("%s, " % len([t for t in srt_task_set if t.coreid == i]))
+        else:
+            wr_buf.write("%s" % len([t for t in srt_task_set if t.coreid == i]))
+    wr_buf.write("};\n")
+    wr_buf.write("\n")
+
+    wr_buf.write("unsigned cores_hyperperiods[MAPPED_CORE_COUNT] = {")
+    for i in range(max([t.coreid + 1 for t in srt_task_set])):
+        if i < max([t.coreid + 1 for t in srt_task_set]) - 1:
+            wr_buf.write("%s, " % find_lcm([t.period for t in srt_task_set if t.coreid == i]))
+        else:
+            wr_buf.write("%s" % find_lcm([t.period for t in srt_task_set if t.coreid == i]))
+    wr_buf.write("};\n")
+    wr_buf.write("\n")
+
+    wr_buf.write("unsigned tasks_coreids[NUM_OF_TASKS] = {")
+    for i in range(len(srt_task_set)):
+        if (i < len(srt_task_set) - 1):
+            wr_buf.write("%s, " % srt_task_set[i].coreid)
+        else:
+            wr_buf.write("%s" % srt_task_set[i].coreid)
+    wr_buf.write("};\n")
+    wr_buf.write("\n")
 
     wr_buf.write("unsigned long long tasks_periods[NUM_OF_TASKS] = {")
     for i in range(len(srt_task_set)):
@@ -171,11 +199,11 @@ def gen_schedule_code(file_name, tasks_file_name, task_set, hyper_period, utiliz
             wr_buf.write("%s_PERIOD, " % srt_task_set[i].name)
         else:
             wr_buf.write("%s_PERIOD" % srt_task_set[i].name)
-    wr_buf.write("};\r\n")
-    wr_buf.write("\r\n")
+    wr_buf.write("};\n")
+    wr_buf.write("\n")
     for i in range(len(srt_task_set)):
-        wr_buf.write("#define %s_INSTS_NUM %s\r\n" % (srt_task_set[i].name, len(srt_task_set[i].getStartPIT())))
-    wr_buf.write("\r\n")
+        wr_buf.write("#define %s_INSTS_NUM %s\n" % (srt_task_set[i].name, len(srt_task_set[i].getStartPIT())))
+    wr_buf.write("\n")
 
     wr_buf.write("unsigned tasks_insts_counts[NUM_OF_TASKS] = {")
     for i in range(len(srt_task_set)):
@@ -183,15 +211,15 @@ def gen_schedule_code(file_name, tasks_file_name, task_set, hyper_period, utiliz
             wr_buf.write("%s_INSTS_NUM, " % srt_task_set[i].name)
         else:
             wr_buf.write("%s_INSTS_NUM" % srt_task_set[i].name)
-    wr_buf.write("};\r\n")
-    wr_buf.write("\r\n")
+    wr_buf.write("};\n")
+    wr_buf.write("\n")
     for i in range(len(srt_task_set)):
         wr_buf.write(
-            "unsigned long long %s_sched_insts[%s_INSTS_NUM] = %s;\r\n" % (srt_task_set[i].name, srt_task_set[i].name,
-                                                                           str(srt_task_set[
-                                                                                   i].getStartPIT()).replace(
-                                                                               "[", "{").replace("]", "}")))
-    wr_buf.write("\r\n")
+            "unsigned long long %s_sched_insts[%s_INSTS_NUM] = %s;\n" % (srt_task_set[i].name, srt_task_set[i].name,
+                                                                         str(srt_task_set[
+                                                                                 i].getStartPIT()).replace(
+                                                                             "[", "{").replace("]", "}")))
+    wr_buf.write("\n")
 
     wr_buf.write("unsigned long long *tasks_schedules[NUM_OF_TASKS] = {")
     for i in range(len(srt_task_set)):
@@ -199,7 +227,7 @@ def gen_schedule_code(file_name, tasks_file_name, task_set, hyper_period, utiliz
             wr_buf.write("%s_sched_insts, " % srt_task_set[i].name)
         else:
             wr_buf.write("%s_sched_insts" % srt_task_set[i].name)
-    wr_buf.write("};\r\n")
+    wr_buf.write("};\n")
 
     if isCli:
         with open(file_name, 'w') as fd:

@@ -3,6 +3,69 @@ from time import *
 from simplesmtscheduler.utilities import *
 
 
+def distributed_task_mapping(task_set, nr_cores, wcet_gap=0, optimize=False, verbose=False):
+    core_ids_mapping = []
+    # Define solver
+    if optimize:
+        smt = Optimize()
+        smt.set('priority', 'pareto')
+    else:
+        smt = Solver()
+        smt.set('arith.solver', 3)
+        smt.set('arith.auto_config_simplex', True)
+
+    # Define constraints
+    opt_bounds = []
+    task_alloc = [
+        [Int(task_set[t].name + "@" + str(c)) for t in range(len(task_set))] for c in range(nr_cores)
+    ]
+
+    # Each variable holds a true/false numeric value 0/1
+    for c in range(nr_cores):
+        for t in range(len(task_set)):
+            smt.add(And(task_alloc[c][t] >= 0, task_alloc[c][t] <= 1))
+
+    # At most each service can be active in one core
+    for t in range(len(task_set)):
+        smt.add(sum(task_alloc[c][t] for c in range(nr_cores)) == 1)
+
+    # Each core assigned at least one task
+    for c in range(nr_cores):
+        smt.add(sum(task_alloc[c][t] for t in range(len(task_set))) >= 1)
+
+    # Constraint utilization per core
+    for c in range(nr_cores):
+        smt.add(
+            sum(task_alloc[c][t] * (task_set[t].execution / task_set[t].period) for t in
+                range(len(task_set))) <= 0.5
+        )
+
+    # Try to solve
+    start_time = time()
+    if smt.check() in (sat, unknown):
+        solution_model = smt.model()
+        elapsed_time = time() - start_time
+        print("Model success!")
+    else:
+        solution_model = None
+        elapsed_time = time() - start_time
+        print("Model failure!")
+
+    if verbose:
+        print("\nAsserted constraints...")
+        for c in smt.assertions():
+            print(c)
+        if optimize:
+            print("\nOptimization bounds:")
+            for o_bound in opt_bounds:
+                print(f"\t{o_bound[0]}: (lower = {o_bound[1].lower()}, upper = {o_bound[1].upper()})")
+        print("\nZ3 statistics...")
+        for k, v in smt.statistics():
+            print("%s : %s" % (k, v))
+
+    return solution_model, elapsed_time
+
+
 def gen_rate_monotonic_schedule(task_set, wcet_gap, optimize=False, verbose=False):
     start_time = time()
     # Sorted copy
