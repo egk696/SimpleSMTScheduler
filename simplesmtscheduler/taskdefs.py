@@ -25,14 +25,14 @@ class PeriodicTask:
             self.fixed_pit = fixed_pit
 
         print(name + " {")
+        print("  CORE/NODE=%s," % coreid)
         print("  T=%s," % period)
         print("  C=%s," % execution)
         print("  D=%s," % deadline)
         print("  O=%s," % offset)
         print("  J=%s," % jitter)
-        print("  CPU=%s," % coreid)
         if fixed_pit is not None:
-            print("  S=%s μs" % fixed_pit)
+            print("  S=%s" % fixed_pit)
         print("};")
 
     def addStartPIT(self, pit: float):

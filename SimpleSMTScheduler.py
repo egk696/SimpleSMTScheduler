@@ -82,7 +82,8 @@ if __name__ == "__main__":
     baseFileName = os.path.basename(tasksFileName)
 
     if [t for t in taskSet if t.execution > t.deadline]:
-        sys.exit("\nTask set is not valid.\nExecution time violate period and deadline constraints")
+        sys.exit("\nTask set is not valid.\nExecution time violate period and deadline constraints for tasks: " + str(
+            [t.name for t in taskSet if t.execution > t.deadline]))
     elif [t for t in taskSet if t.deadline > t.period]:
         sys.exit("\nTask set is not valid.\nDeadline times violate period constraints")
     elif [t for t in taskSet if t.offset > t.period]:

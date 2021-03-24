@@ -1,7 +1,7 @@
 Period,Execution,Deadline,Offset,Jitter,CPU ID,Fixed Start,Name,Function
 20000,163,20000,0,0,0,0,ENGINE,engine486_fun
 20000,428,20000,0,0,0,None,ELEVATOR,elevator489_fun
-20000,50000,20000,1000,0,0,None,AIRCRAFT_DYN,aircraft_dynamics495_fun
+20000,13000,20000,1000,0,0,None,AIRCRAFT_DYN,aircraft_dynamics495_fun
 20000,79,20000,13000,0,0,None,VL_AIR2FILTER_SEND,vl_air_to_filter_send
 80000,297,80000,13000,0,0,None,VL_CTRL2AIR_RECV,vl_ctrl_to_air_recv
 20000,10000,20000,0,0,1,None,LOGGING,logging_fun

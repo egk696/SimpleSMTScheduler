@@ -1,4 +1,5 @@
 import csv
+import parser
 import shutil
 from io import StringIO
 from math import *
@@ -40,23 +41,23 @@ def parse_csv_taskset(csv_file, task_set):
             is_first_row = False
         elif not str(row[0]).startswith("#"):
             try:
-                period = float(row[0])
+                period = eval(parser.expr(row[0]).compile())
             except ValueError:
                 period = 0
             try:
-                execution = float(row[1])
+                execution = eval(parser.expr(row[1]).compile())
             except ValueError:
                 execution = 0
             try:
-                deadline = float(row[2])
+                deadline = eval(parser.expr(row[2]).compile())
             except ValueError:
                 deadline = 0
             try:
-                offset = float(row[3])
+                offset = eval(parser.expr(row[3]).compile())
             except ValueError:
                 offset = 0
             try:
-                jitter = float(row[4])
+                jitter = eval(parser.expr(row[4]).compile())
             except ValueError:
                 jitter = 0
             try:
@@ -64,7 +65,7 @@ def parse_csv_taskset(csv_file, task_set):
             except ValueError:
                 coreid = None
             try:
-                fixed_pit = float(row[6])
+                fixed_pit = eval(parser.expr(row[6]).compile())
             except ValueError:
                 fixed_pit = None
             try:
@@ -93,7 +94,7 @@ def plot_cyclic_schedule(task_set, hyper_period, iterations=1, name=None):
         srt_task_set = task_set
 
     if name is not None:
-        plt.title(name)
+        plt.title(name + " (Hyper-period = " + str(hyper_period) + ")")
 
     # Setting Y-axis limits
     axis.set_ylim(0, len(srt_task_set) * 10)
@@ -215,10 +216,10 @@ def gen_schedule_code(file_name, tasks_file_name, task_set, hyper_period, utiliz
     wr_buf.write("\n")
     for i in range(len(srt_task_set)):
         wr_buf.write(
-            "unsigned long long %s_sched_insts[%s_INSTS_NUM] = %s;\n" % (srt_task_set[i].name, srt_task_set[i].name,
-                                                                         str(srt_task_set[
-                                                                                 i].getStartPIT()).replace(
-                                                                             "[", "{").replace("]", "}")))
+            "unsigned long long %s_sched_insts[%s] = %s;\n" % (srt_task_set[i].name, len(srt_task_set[i].getStartPIT()),
+                                                               str(srt_task_set[
+                                                                       i].getStartPIT()).replace(
+                                                                   "[", "{").replace("]", "}")))
     wr_buf.write("\n")
 
     wr_buf.write("unsigned long long *tasks_schedules[NUM_OF_TASKS] = {")
