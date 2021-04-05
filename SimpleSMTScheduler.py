@@ -75,7 +75,9 @@ if __name__ == "__main__":
         tasksFileName = input("Enter the csv file for the tasks to be scheduled: ")
         wcet_offset = int(input("Enter the WCET allocation gap between activations: "))
         schedulePlotPeriods = int(input("Enter the number of hyper periods to be plotted: "))
-        verbose = input("Enable statistics (Yes/No)? ") == "Yes"
+        code = input("Enable code output (Yes/No)? ").lower() == "Yes".lower()
+        optimize = input("Enable optimization (Yes/No)? ").lower() == "Yes".lower()
+        verbose = input("Enable verbose mode (Yes/No)? ").lower() == "Yes".lower()
 
     print("Importing task set from file source...\n")
     parse_csv_taskset(tasksFileName, taskSet)
@@ -107,14 +109,14 @@ if __name__ == "__main__":
             if schedule is not None:
                 gen_schedule_activations(schedule, core_tasks)
 
-                print("\t- Activation Instances:")
+                print("\n\t- Activation Instances:")
                 for i in range(len(core_tasks)):
                     print("\t\tschedtime_t %s_sched_insts[%s] = %s;" % (
                         core_tasks[i].name, len(core_tasks[i].getStartPIT()),
                         str(core_tasks[i].getStartPIT()).replace("[", "{").replace(
                             "]", "}")))
 
-                print("\t- Estimated release jitter per task:")
+                print("\n\t- Estimated release jitter per task:")
                 tasks_jitter = calc_jitter_pertask(core_tasks)
                 for t in core_tasks:
                     print(f"\t\t{t.name}", end='')
@@ -126,8 +128,8 @@ if __name__ == "__main__":
                 print(f"\tA schedule for CPU ID {core_id} could not be generated")
 
         if interactive:
-            schedulePlot = plot_cyclic_schedule(os.path.splitext(baseFileName)[0], taskSet, hyperPeriod,
-                                                schedulePlotPeriods)
+            schedulePlot = plot_cyclic_schedule(taskSet, hyperPeriod,
+                                                schedulePlotPeriods, os.path.splitext(baseFileName)[0])
             schedulePlot.show()
         elif plot:
             if split:
