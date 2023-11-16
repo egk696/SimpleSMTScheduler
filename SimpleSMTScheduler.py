@@ -1,6 +1,8 @@
 #!/usr/bin/python
 
 import getopt
+import sys
+import os
 from statistics import stdev
 
 from simplesmtscheduler.schedulers import *

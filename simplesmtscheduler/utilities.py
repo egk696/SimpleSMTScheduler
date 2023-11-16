@@ -1,5 +1,5 @@
 import csv
-import parser
+import ast
 import shutil
 from io import StringIO
 from math import *
@@ -29,7 +29,7 @@ def z3_abs(x):
 
 
 def parse_csv_taskset(csv_file, task_set):
-    if isinstance(csv_file, io.StringIO):
+    if isinstance(csv_file, StringIO):
         f = csv_file
     else:
         f = open(csv_file, 'r')
@@ -41,23 +41,23 @@ def parse_csv_taskset(csv_file, task_set):
             is_first_row = False
         elif not str(row[0]).startswith("#"):
             try:
-                period = eval(parser.expr(row[0]).compile())
+                period = eval(compile(ast.parse(row[0], mode='eval'), '<string>', 'eval'))
             except ValueError:
                 period = 0
             try:
-                execution = eval(parser.expr(row[1]).compile())
+                execution = eval(compile(ast.parse(row[1], mode='eval'), '<string>', 'eval'))
             except ValueError:
                 execution = 0
             try:
-                deadline = eval(parser.expr(row[2]).compile())
+                deadline = eval(compile(ast.parse(row[2], mode='eval'), '<string>', 'eval'))
             except ValueError:
                 deadline = 0
             try:
-                offset = eval(parser.expr(row[3]).compile())
+                offset = eval(compile(ast.parse(row[3], mode='eval'), '<string>', 'eval'))
             except ValueError:
                 offset = 0
             try:
-                jitter = eval(parser.expr(row[4]).compile())
+                jitter = eval(compile(ast.parse(row[4], mode='eval'), '<string>', 'eval'))
             except ValueError:
                 jitter = 0
             try:
@@ -65,7 +65,7 @@ def parse_csv_taskset(csv_file, task_set):
             except ValueError:
                 coreid = None
             try:
-                fixed_pit = eval(parser.expr(row[6]).compile())
+                fixed_pit = eval(compile(ast.parse(row[6], mode='eval'), '<string>', 'eval'))
             except ValueError:
                 fixed_pit = None
             try:
@@ -110,10 +110,10 @@ def plot_cyclic_schedule(task_set, hyper_period, iterations=1, name=None):
     # Labelling tickes of y-axis
     axis.set_yticklabels([(t.coreid, t.name) for t in srt_task_set])
     # Show the major grid lines with dark grey lines
-    plt.grid(b=True, which='major', color='#666666', linestyle='-')
+    plt.grid(visible=True, which='major', color='#666666', linestyle='-')
     # Show the minor grid lines with very faint and almost transparent grey lines
     plt.minorticks_on()
-    plt.grid(b=True, which='minor', color='#999999', linestyle='-', alpha=0.2)
+    plt.grid(visible=True, which='minor', color='#999999', linestyle='-', alpha=0.2)
     # Color map
     cmap = plt.cm.get_cmap('viridis', len(srt_task_set))
     print("\nSchedule plotted for %s hyper-periods\n" % iterations)
